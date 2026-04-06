@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DARK HORSE — 78 다크호스</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<style>
+*{font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;}
+.playfair{font-family:'Playfair Display',serif;}
+.tab-active{border-bottom:2px solid #000;font-weight:700;color:#000;}
+.card-hover{transition:all .18s;cursor:pointer;}
+.card-hover:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.10);}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center;}
+.modal-box{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;padding:24px 20px 40px;animation:slideUp .25s cubic-bezier(.2,.9,.3,1);}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.btn-black{background:#000;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:.82rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.btn-black:hover{opacity:.8;}
+.btn-outline{background:#fff;color:#000;border:1.5px solid #000;border-radius:8px;padding:9px 18px;font-size:.82rem;font-weight:700;cursor:pointer;}
+.btn-outline:hover{background:#000;color:#fff;}
+input,select,textarea{outline:none;border:1px solid #e5e7eb;border-radius:8px;padding:9px 12px;width:100%;font-size:.85rem;font-family:'Noto Sans KR',sans-serif;}
+input:focus,select:focus,textarea:focus{border-color:#000;}
+.badge-ok{background:#000;color:#fff;font-size:.6rem;padding:2px 8px;border-radius:20px;font-weight:700;}
+.badge-no{background:#e5e7eb;color:#6b7280;font-size:.6rem;padding:2px 8px;border-radius:20px;font-weight:700;}
+.badge-mem{background:#000;color:#fff;font-size:.6rem;padding:2px 7px;border-radius:20px;}
+.badge-non{background:#f3f4f6;color:#9ca3af;font-size:.6rem;padding:2px 7px;border-radius:20px;}
+.hw-건개{background:#dbeafe;color:#1d4ed8;font-size:.6rem;padding:2px 7px;border-radius:20px;font-weight:700;}
+.hw-금투{background:#fef3c7;color:#92400e;font-size:.6rem;padding:2px 7px;border-radius:20px;font-weight:700;}
+.hw-경관{background:#d1fae5;color:#065f46;font-size:.6rem;padding:2px 7px;border-radius:20px;font-weight:700;}
+.hw-글프{background:#fce7f3;color:#9d174d;font-size:.6rem;padding:2px 7px;border-radius:20px;font-weight:700;}
+.hw-etc{background:#f3f4f6;color:#6b7280;font-size:.6rem;padding:2px 7px;border-radius:20px;font-weight:700;}
+.chip-yes{background:#000;color:#fff;border-radius:20px;padding:4px 12px;font-size:.7rem;cursor:pointer;border:none;font-family:'Noto Sans KR',sans-serif;font-weight:700;}
+.chip-no{background:#f9fafb;color:#9ca3af;border-radius:20px;padding:4px 12px;font-size:.7rem;cursor:pointer;border:1px solid #e5e7eb;font-family:'Noto Sans KR',sans-serif;}
+.toggle-paid{cursor:pointer;transition:all .15s;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:.75rem;padding:6px 14px;border-radius:20px;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px;}
+</style>
+</head>
+<body class="bg-white min-h-screen">
+
+<!-- TOPBAR -->
+<header class="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100" style="height:54px;">
+  <div class="max-w-2xl mx-auto px-4 h-full flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+        <path d="M14 34 Q10 26 11 18 Q12 10 20 7 Q28 4 34 9 Q40 14 39 23 Q38 31 32 36 Q26 41 18 39 Q14 38 14 34Z" fill="#000" opacity=".1" stroke="#000" stroke-width="1.8"/>
+        <path d="M20 7 Q20 2 24 1 Q28 0 30 4 Q31 8 34 9" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="29" cy="8" r="2" fill="#000"/>
+        <path d="M14 34 Q8 37 6 43" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+        <path d="M22 39 Q21 44 20 47" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M17 38 Q16 43 15 46" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M30 37 Q32 42 33 46" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+        <path d="M34 34 Q38 39 39 43" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="playfair font-bold text-sm tracking-widest leading-none">DARK HORSE</div>
+        <div class="text-gray-400 leading-none mt-0.5" style="font-size:.42rem;letter-spacing:2px;">건국대 부동산대학원 · 78년 말띠</div>
+      </div>
+    </div>
+    <button onclick="openAdminModal()" class="text-gray-400 hover:text-black transition-colors border border-gray-200 rounded-lg px-3 py-1.5" style="font-size:.72rem;">⚙ 관리</button>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="fixed z-40 bg-white border-b border-gray-100" style="top:54px;left:0;right:0;">
+  <div class="max-w-2xl mx-auto px-4 flex">
+    <button onclick="setTab('home')" id="tab-home" class="tab-btn flex-1 py-3 text-center text-gray-400 transition-all" style="font-size:.8rem;">🏠 홈</button>
+    <button onclick="setTab('members')" id="tab-members" class="tab-btn flex-1 py-3 text-center text-gray-400 transition-all" style="font-size:.8rem;">👥 회원명부</button>
+    <button onclick="setTab('dues')" id="tab-dues" class="tab-btn flex-1 py-3 text-center text-gray-400 transition-all" style="font-size:.8rem;">💰 회비/행사</button>
+  </div>
+</div>
+
+<main class="max-w-2xl mx-auto px-4 pb-16" style="padding-top:106px;">
+
+  <!-- HOME -->
+  <div id="page-home">
+    <div class="text-center py-6">
+      <div class="flex justify-center mb-4">
+        <svg width="160" height="110" viewBox="0 0 220 150" fill="none">
+          <path d="M55 112 Q44 98 42 82 Q40 64 54 54 Q68 42 88 44 Q108 44 120 56 Q136 70 136 88 Q136 106 120 118 Q102 130 78 128 Q60 126 55 112Z" fill="#111" opacity=".93"/>
+          <path d="M88 44 Q92 30 96 18 Q100 8 98 2" stroke="#111" stroke-width="17" stroke-linecap="round" fill="none"/>
+          <path d="M82 24 Q76 14 80 6 Q84 0 93 1 Q102 2 104 10 Q106 18 100 26 Q96 32 88 32 Q83 31 82 24Z" fill="#111"/>
+          <circle cx="96" cy="9" r="2.5" fill="white"/>
+          <circle cx="96.8" cy="8.5" r="1" fill="#111"/>
+          <path d="M82 20 Q81 18 83 18 Q85 19 84 21" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          <path d="M98 2 Q104 -2 110 -1 Q108 5 110 9 Q105 6 104 11" stroke="#555" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <path d="M93 6 Q88 0 84 -1" stroke="#555" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <path d="M55 112 Q44 118 40 132 Q36 142 40 148" stroke="#111" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+          <path d="M55 112 Q48 126 50 138 Q52 146 56 150" stroke="#333" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M57 114 Q54 128 58 140 Q60 148 64 152" stroke="#555" stroke-width="3" stroke-linecap="round" fill="none"/>
+          <path d="M126 114 Q132 126 134 138 Q134 146 132 152" stroke="#111" stroke-width="9" stroke-linecap="round" fill="none"/>
+          <path d="M114 120 Q114 132 112 142 Q111 148 111 154" stroke="#111" stroke-width="9" stroke-linecap="round" fill="none"/>
+          <path d="M72 124 Q68 136 64 146 Q62 152 61 158" stroke="#111" stroke-width="9" stroke-linecap="round" fill="none"/>
+          <path d="M86 126 Q86 138 86 148 Q86 154 87 159" stroke="#111" stroke-width="9" stroke-linecap="round" fill="none"/>
+          <ellipse cx="133" cy="153" rx="7" ry="3.5" fill="#222"/>
+          <ellipse cx="111" cy="155" rx="7" ry="3.5" fill="#222"/>
+          <ellipse cx="61" cy="159" rx="7" ry="3.5" fill="#222"/>
+          <ellipse cx="87" cy="160" rx="7" ry="3.5" fill="#222"/>
+          <line x1="14" y1="76" x2="38" y2="76" stroke="#000" stroke-width="2" opacity=".12" stroke-linecap="round"/>
+          <line x1="8" y1="90" x2="36" y2="90" stroke="#000" stroke-width="2.5" opacity=".1" stroke-linecap="round"/>
+          <line x1="12" y1="104" x2="34" y2="104" stroke="#000" stroke-width="1.8" opacity=".08" stroke-linecap="round"/>
+          <ellipse cx="88" cy="162" rx="52" ry="5" fill="#000" opacity=".05"/>
+        </svg>
+      </div>
+      <h1 class="playfair text-3xl font-bold tracking-widest mb-1">DARK HORSE</h1>
+      <p class="text-gray-500 text-sm mb-1">건국대학교 부동산대학원</p>
+      <p class="text-gray-400" style="font-size:.72rem;">2026, 다시 뛰는 다크호스! 78년생 말띠들의 거침없는 질주</p>
+    </div>
+    <div class="grid grid-cols-3 gap-3 mb-6">
+      <div class="border border-gray-100 rounded-2xl p-4 text-center card-hover"><div class="text-2xl font-black" id="stat-total">—</div><div class="text-gray-400 mt-1" style="font-size:.62rem;letter-spacing:1px;">총 회원</div></div>
+      <div class="border border-gray-100 rounded-2xl p-4 text-center card-hover"><div class="text-2xl font-black" id="stat-full">—</div><div class="text-gray-400 mt-1" style="font-size:.62rem;letter-spacing:1px;">정회원</div></div>
+      <div class="border border-gray-100 rounded-2xl p-4 text-center card-hover"><div class="text-2xl font-black" id="stat-rate">—</div><div class="text-gray-400 mt-1" style="font-size:.62rem;letter-spacing:1px;">납부율</div></div>
+    </div>
+    <div class="flex items-center gap-2 font-bold text-base mb-3">📅 다가오는 행사</div>
+    <div id="upcoming-events"></div>
+  </div>
+
+  <!-- MEMBERS -->
+  <div id="page-members" class="hidden">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold text-base">👥 회원 명부</h2>
+      <button onclick="openModal('modal-add-member')" class="btn-black" style="padding:7px 14px;font-size:.75rem;">＋ 원우 추가</button>
+    </div>
+    <div class="relative mb-3">
+      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:.9rem;">🔍</span>
+      <input type="text" id="member-search" style="padding-left:34px;" class="w-full" placeholder="이름, 기수, 회사 검색…" oninput="renderMembers()"/>
+    </div>
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
+      <button onclick="setFilter('all')" id="filter-all" class="btn-black whitespace-nowrap" style="padding:5px 12px;font-size:.72rem;">전체</button>
+      <button onclick="setFilter('정회원')" id="filter-정회원" class="btn-outline whitespace-nowrap" style="padding:5px 12px;font-size:.72rem;">정회원</button>
+      <button onclick="setFilter('비회원')" id="filter-비회원" class="btn-outline whitespace-nowrap" style="padding:5px 12px;font-size:.72rem;">비회원</button>
+      <button onclick="setFilter('건개')" id="filter-건개" class="btn-outline whitespace-nowrap" style="padding:5px 12px;font-size:.72rem;">건개</button>
+      <button onclick="setFilter('금투')" id="filter-금투" class="btn-outline whitespace-nowrap" style="padding:5px 12px;font-size:.72rem;">금투</button>
+      <button onclick="setFilter('경관')" id="filter-경관" class="btn-outline whitespace-nowrap" style="padding:5px 12px;font-size:.72rem;">경관</button>
+      <button onclick="setFilter('글프')" id="filter-글프" class="btn-outline whitespace-nowrap" style="padding:5px 12px;font-size:.72rem;">글프</button>
+    </div>
+    <div id="member-count" class="text-gray-400 text-xs text-right mb-2"></div>
+    <div id="member-list"></div>
+  </div>
+
+  <!-- DUES -->
+  <div id="page-dues" class="hidden">
+    <div class="flex gap-0 border-b border-gray-100 mb-4">
+      <button onclick="setDuesTab('dues')" id="dtab-dues" class="flex-1 py-2.5 text-center font-bold border-b-2 border-black" style="font-size:.8rem;">💰 회비 관리</button>
+      <button onclick="setDuesTab('events')" id="dtab-events" class="flex-1 py-2.5 text-center text-gray-400" style="font-size:.8rem;">📅 행사 관리</button>
+    </div>
+    <div id="dues-panel">
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="bg-gray-50 rounded-xl p-3 text-center"><div class="font-black text-xl" id="dues-total">—</div><div class="text-gray-400 mt-0.5" style="font-size:.6rem;">정회원</div></div>
+        <div class="bg-gray-50 rounded-xl p-3 text-center"><div class="font-black text-xl text-green-600" id="dues-paid">—</div><div class="text-gray-400 mt-0.5" style="font-size:.6rem;">완납</div></div>
+        <div class="bg-gray-50 rounded-xl p-3 text-center"><div class="font-black text-xl text-red-500" id="dues-unpaid">—</div><div class="text-gray-400 mt-0.5" style="font-size:.6rem;">미납</div></div>
+      </div>
+      <div class="mb-4">
+        <div class="flex justify-between mb-1"><span class="text-xs text-gray-400">납부율</span><span class="text-xs font-bold" id="dues-rate-text">0%</span></div>
+        <div class="bg-gray-100 rounded-full h-2"><div id="dues-bar" class="bg-black rounded-full h-2 transition-all" style="width:0%"></div></div>
+      </div>
+      <p class="text-gray-400 mb-3" style="font-size:.7rem;">* 버튼 클릭으로 납부 상태를 변경합니다 (총무 전용)</p>
+      <div id="dues-list"></div>
+    </div>
+    <div id="events-panel" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold text-base">📅 행사 관리</h2>
+        <button onclick="openModal('modal-add-event')" class="btn-black" style="padding:7px 14px;font-size:.75rem;">＋ 행사 추가</button>
+      </div>
+      <div id="events-mgmt-list"></div>
+    </div>
+  </div>
+</main>
+
+<!-- MODALS -->
+<div id="modal-member" class="modal-bg hidden" onclick="closeModal('modal-member')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <div id="modal-member-content"></div>
+  </div>
+</div>
+
+<div id="modal-event-detail" class="modal-bg hidden" onclick="closeModal('modal-event-detail')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <div id="modal-event-detail-content"></div>
+  </div>
+</div>
+
+<div id="modal-attend" class="modal-bg hidden" onclick="closeModal('modal-attend')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <h3 class="font-bold text-base mb-1" id="modal-attend-title">참가 신청</h3>
+    <p class="text-gray-400 text-xs mb-3">참석할 원우를 선택하세요</p>
+    <div class="relative mb-3">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;">🔍</span>
+      <input type="text" id="attend-search" style="padding-left:30px;" placeholder="이름 검색…" oninput="renderAttendSearch()"/>
+    </div>
+    <div id="attend-list" class="max-h-64 overflow-y-auto"></div>
+    <button onclick="closeModal('modal-attend')" class="btn-black w-full mt-4">완료</button>
+  </div>
+</div>
+
+<div id="modal-add-member" class="modal-bg hidden" onclick="closeModal('modal-add-member')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <h3 class="font-bold text-base mb-4">원우 추가</h3>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="text-xs text-gray-500 mb-1 block">성함 *</label><input id="add-name" placeholder="홍길동"/></div>
+        <div><label class="text-xs text-gray-500 mb-1 block">기수 *</label><input id="add-grade" placeholder="49기"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="text-xs text-gray-500 mb-1 block">학회</label>
+          <select id="add-hakwhe"><option value="">선택</option><option>건개</option><option>금투</option><option>경관</option><option>글프</option></select></div>
+        <div><label class="text-xs text-gray-500 mb-1 block">회원구분</label>
+          <select id="add-status"><option value="정회원">정회원</option><option value="비회원">비회원</option></select></div>
+      </div>
+      <div><label class="text-xs text-gray-500 mb-1 block">회사/소속</label><input id="add-company" placeholder="(주)다크호스"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">직함</label><input id="add-title" placeholder="대표이사"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">연락처</label><input id="add-phone" placeholder="010-0000-0000"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">OT조</label><input id="add-ot" placeholder="1조"/></div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="addMember()" class="btn-black flex-1">추가 완료</button>
+      <button onclick="closeModal('modal-add-member')" class="btn-outline">취소</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-add-event" class="modal-bg hidden" onclick="closeModal('modal-add-event')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <h3 class="font-bold text-base mb-4">행사 추가</h3>
+    <div class="space-y-3">
+      <div><label class="text-xs text-gray-500 mb-1 block">행사명 *</label><input id="ev-name" placeholder="2026 종강파티"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">날짜 *</label><input id="ev-date" type="date"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">장소</label><input id="ev-place" placeholder="강남역 인근 레스토랑"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">설명</label><textarea id="ev-desc" rows="2" placeholder="행사 설명" style="resize:none;"></textarea></div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="addEvent()" class="btn-black flex-1">추가 완료</button>
+      <button onclick="closeModal('modal-add-event')" class="btn-outline">취소</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-admin" class="modal-bg hidden" onclick="closeModal('modal-admin')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <h3 class="font-bold text-base mb-4">⚙️ 관리자 설정</h3>
+    <div class="space-y-3">
+      <button onclick="exportData()" class="btn-outline w-full">📥 데이터 내보내기 (JSON)</button>
+      <div><label class="text-xs text-gray-500 mb-1 block">데이터 가져오기 (JSON 붙여넣기)</label>
+        <textarea id="import-json" rows="4" placeholder='{"members":[...],"events":[...]}' style="font-size:.72rem;resize:none;"></textarea></div>
+      <button onclick="importData()" class="btn-black w-full">가져오기 적용</button>
+      <hr class="border-gray-100"/>
+      <button onclick="if(confirm('모든 데이터를 초기화하시겠습니까?')){resetData()}" class="w-full text-red-500 border border-red-200 rounded-lg py-2.5 text-sm font-bold">🗑 데이터 초기화</button>
+    </div>
+    <button onclick="closeModal('modal-admin')" class="btn-black w-full mt-4">닫기</button>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-2.5 rounded-full shadow-lg z-50 opacity-0 transition-opacity pointer-events-none" style="font-size:.78rem;white-space:nowrap;"></div>
+
+<script>
+const DEFAULT_MEMBERS=[
+  {id:"m1",name:"박숙경",grade:"49기",hakwhe:"금투",phone:"010-9119-7390",company:"DL E&C",title:"부장",ot:"3",status:"정회원",paid:false},
+  {id:"m2",name:"문지연",grade:"49기",hakwhe:"글프",phone:"010-9482-3317",company:"에코네트워크",title:"팀장",ot:"4",status:"정회원",paid:false},
+  {id:"m3",name:"박정원",grade:"49기",hakwhe:"금투",phone:"010-5175-7897",company:"하나증권",title:"부장",ot:"1",status:"정회원",paid:false},
+  {id:"m4",name:"백은경",grade:"49기",hakwhe:"금투",phone:"010-7460-8758",company:"경일감정평가법인",title:"이사",ot:"2",status:"정회원",paid:false},
+  {id:"m5",name:"김봉준",grade:"49기",hakwhe:"건개",phone:"010-6557-5579",company:"제이브레드",title:"대표이사",ot:"2",status:"정회원",paid:false},
+  {id:"m6",name:"유성민",grade:"49기",hakwhe:"금투",phone:"010-7669-0403",company:"하나감정평가법인",title:"이사",ot:"1",status:"정회원",paid:false},
+  {id:"m7",name:"이건영",grade:"49기",hakwhe:"경관",phone:"010-7380-3010",company:"경희생생한방병원",title:"병원장",ot:"1",status:"정회원",paid:false},
+  {id:"m8",name:"박윤준",grade:"49기",hakwhe:"글프",phone:"010-2234-8236",company:"나라감정평가법인",title:"기획이사",ot:"2",status:"정회원",paid:false},
+  {id:"m9",name:"김신동",grade:"48기",hakwhe:"글프",phone:"010-4805-7729",company:"스위트스팟",title:"이사",ot:"1조",status:"정회원",paid:false},
+  {id:"m10",name:"김종환",grade:"48기",hakwhe:"금투",phone:"010-5428-8267",company:"수협은행",title:"쌍문동지점 지점장",ot:"3조",status:"정회원",paid:false},
+  {id:"m11",name:"김지훈",grade:"48기",hakwhe:"금투",phone:"010-5000-2841",company:"법무법인 위어드바이즈",title:"대표변호사",ot:"3조",status:"정회원",paid:false},
+  {id:"m12",name:"박준호",grade:"48기",hakwhe:"금투",phone:"010-8991-7842",company:"신한자산신탁",title:"부장",ot:"",status:"정회원",paid:false},
+  {id:"m13",name:"서정욱",grade:"48기",hakwhe:"금투",phone:"010-7711-2000",company:"(주)서우",title:"이사",ot:"3조",status:"비회원",paid:false},
+  {id:"m14",name:"선상배",grade:"48기",hakwhe:"건개",phone:"010-6259-8769",company:"대한감정평가법인",title:"이사",ot:"3조",status:"정회원",paid:false},
+  {id:"m15",name:"성민규",grade:"48기",hakwhe:"금투",phone:"010-3808-0490",company:"위솔자산운용(주)",title:"부장",ot:"1조",status:"정회원",paid:false},
+  {id:"m16",name:"오형철",grade:"48기",hakwhe:"글프",phone:"010-7674-5997",company:"법무법인 시우",title:"대표변호사",ot:"4조",status:"비회원",paid:false},
+  {id:"m17",name:"채우병",grade:"48기",hakwhe:"경관",phone:"010-5098-1265",company:"현대회계법인",title:"Director/공인회계사",ot:"",status:"정회원",paid:false},
+  {id:"m18",name:"권요",grade:"47기",hakwhe:"금투",phone:"010-3579-3051",company:"리딩투자증권",title:"이사",ot:"2조",status:"정회원",paid:false},
+  {id:"m19",name:"김용민",grade:"47기",hakwhe:"금투",phone:"010-4210-4701",company:"신한은행",title:"부부장",ot:"1조",status:"정회원",paid:false},
+  {id:"m20",name:"김재민",grade:"47기",hakwhe:"글프",phone:"010-6288-4215",company:"안테나알이씨",title:"상무",ot:"1조",status:"정회원",paid:false},
+  {id:"m21",name:"김현수",grade:"47기",hakwhe:"글프",phone:"010-5360-7821",company:"성현회계법인",title:"이사",ot:"4조",status:"비회원",paid:false},
+  {id:"m22",name:"신민영",grade:"47기",hakwhe:"건개",phone:"010-6546-1774",company:"법무법인 호암",title:"대표변호사",ot:"1조",status:"정회원",paid:false},
+  {id:"m23",name:"박상준",grade:"46기",hakwhe:"글프",phone:"010-5259-9850",company:"주)Hsbl",title:"이사",ot:"4조",status:"정회원",paid:false},
+  {id:"m24",name:"차범석",grade:"46기",hakwhe:"건개",phone:"010-9882-3319",company:"수협은행",title:"지점장",ot:"1조",status:"정회원",paid:false},
+  {id:"m25",name:"김광민",grade:"45기",hakwhe:"금투",phone:"010-9095-0059",company:"DS네트웍스(주)",title:"CFO",ot:"2조",status:"비회원",paid:false},
+  {id:"m26",name:"김종도",grade:"45기",hakwhe:"경관",phone:"010-4127-7857",company:"연세부동산중개법인(주)",title:"대표이사",ot:"3조",status:"비회원",paid:false},
+  {id:"m27",name:"김지은",grade:"45기",hakwhe:"건개",phone:"010-9052-0536",company:"농협은행",title:"팀장",ot:"2조",status:"정회원",paid:false},
+  {id:"m28",name:"김지혜",grade:"45기",hakwhe:"글프",phone:"010-2003-9689",company:"회계법인윤",title:"파트너 회계사",ot:"3조",status:"정회원",paid:false},
+  {id:"m29",name:"김혜경",grade:"45기",hakwhe:"경관",phone:"010-2711-7869",company:"서초구청",title:"팀장",ot:"4조",status:"정회원",paid:false},
+  {id:"m30",name:"김희수",grade:"45기",hakwhe:"경관",phone:"010-9551-6500",company:"신한은행",title:"팀장",ot:"2조",status:"정회원",paid:false},
+  {id:"m31",name:"유중호",grade:"45기",hakwhe:"건개",phone:"010-3088-8674",company:"어반어스홀딩스(주)",title:"본부장",ot:"3조",status:"정회원",paid:false},
+  {id:"m32",name:"이서영",grade:"45기",hakwhe:"건개",phone:"010-3323-6959",company:"한국토지주택공사",title:"차장",ot:"3조",status:"정회원",paid:false},
+  {id:"m33",name:"이재후",grade:"45기",hakwhe:"건개",phone:"010-2573-9166",company:"수협은행",title:"팀장",ot:"2조",status:"정회원",paid:false},
+  {id:"m34",name:"임희찬",grade:"45기",hakwhe:"건개",phone:"010-6682-6724",company:"법무법인 한원",title:"변호사",ot:"1조",status:"정회원",paid:false},
+  {id:"m35",name:"주용한",grade:"45기",hakwhe:"금투",phone:"010-5693-0054",company:"수협은행",title:"팀장",ot:"4조",status:"정회원",paid:false},
+  {id:"m36",name:"홍석태",grade:"45기",hakwhe:"금투",phone:"010-2288-9796",company:"한국투자부동산신탁",title:"3본부 부서장",ot:"3조",status:"정회원",paid:false},
+  {id:"m37",name:"강민정",grade:"44기",hakwhe:"경관",phone:"010-6530-0219",company:"세무법인예인압구정",title:"대표 세무사",ot:"1조",status:"비회원",paid:false},
+  {id:"m38",name:"강범무",grade:"44기",hakwhe:"건개",phone:"010-8954-0146",company:"대건에프에이",title:"대표이사",ot:"4조",status:"비회원",paid:false},
+  {id:"m39",name:"김도형",grade:"44기",hakwhe:"건개",phone:"010-3788-3979",company:"하나은행",title:"부장",ot:"",status:"정회원",paid:false},
+  {id:"m40",name:"양대우",grade:"44기",hakwhe:"건개",phone:"010-6213-9874",company:"에이커트리",title:"사업부장",ot:"2조",status:"정회원",paid:false},
+  {id:"m41",name:"유서준",grade:"44기",hakwhe:"건개",phone:"010-7770-1048",company:"삼성화재",title:"책임",ot:"1조",status:"비회원",paid:false},
+  {id:"m42",name:"이기혁",grade:"44기",hakwhe:"건개",phone:"010-4405-3668",company:"다옴개발 주식회사",title:"대표이사",ot:"3조",status:"정회원",paid:false},
+  {id:"m43",name:"장현주",grade:"44기",hakwhe:"경관",phone:"010-6286-1652",company:"",title:"변호사",ot:"1조",status:"비회원",paid:false},
+  {id:"m44",name:"고상현",grade:"43기",hakwhe:"건개",phone:"010-7761-4836",company:"법무법인(유한) 시그니처 여의도",title:"변호사",ot:"3조",status:"정회원",paid:false},
+  {id:"m45",name:"김알렉산더제이",grade:"43기",hakwhe:"",phone:"010-9996-5559",company:"Monroe Capital LLC",title:"아시아 대표",ot:"4조",status:"정회원",paid:false},
+  {id:"m46",name:"신정수",grade:"43기",hakwhe:"건개",phone:"010-9638-7100",company:"신세계센트럴시티",title:"부장",ot:"3조",status:"비회원",paid:false},
+  {id:"m47",name:"이종욱",grade:"43기",hakwhe:"경관",phone:"010-2811-3344",company:"하나은행",title:"지점장",ot:"2조",status:"정회원",paid:false},
+  {id:"m48",name:"정승환",grade:"43기",hakwhe:"경관",phone:"010-3137-2847",company:"삼구아이앤씨",title:"상무",ot:"1조",status:"비회원",paid:false},
+  {id:"m49",name:"박홍주",grade:"42기",hakwhe:"글프",phone:"010-2681-8421",company:"CA파트너스, CA파트너스 건축사사무소",title:"대표",ot:"3조",status:"정회원",paid:false},
+  {id:"m50",name:"양승훈",grade:"42기",hakwhe:"건개",phone:"010-8844-9344",company:"부국증권",title:"이사",ot:"1조",status:"정회원",paid:false},
+  {id:"m51",name:"이치중",grade:"42기",hakwhe:"건개",phone:"010-3703-0992",company:"양지바른치과 ,(주)더블제이파트너스, (주)더블제이에셋대부",title:"대표원장",ot:"2조",status:"정회원",paid:false},
+  {id:"m52",name:"임홍전",grade:"42기",hakwhe:"글프",phone:"010-3548-7872",company:"토라(주)",title:"대표이사",ot:"",status:"정회원",paid:false},
+  {id:"m53",name:"장현수",grade:"42기",hakwhe:"건개",phone:"010-8971-8759",company:"건국대학교",title:"차장",ot:"4조",status:"정회원",paid:false},
+  {id:"m54",name:"조진호",grade:"42기",hakwhe:"건개",phone:"010-2428-5911",company:"달란트에셋부동산개발",title:"대표이사",ot:"3조",status:"비회원",paid:false},
+  {id:"m55",name:"한수연",grade:"42기",hakwhe:"금투",phone:"010-9075-7416",company:"우리은행",title:"지점장",ot:"3조",status:"정회원",paid:false},
+  {id:"m56",name:"김성목",grade:"41기",hakwhe:"경관",phone:"010-3168-7838",company:"대한토지신탁",title:"팀장",ot:"1조",status:"정회원",paid:false},
+  {id:"m57",name:"오영석",grade:"41기",hakwhe:"건개",phone:"010-8652-1482",company:"대우건설",title:"팀장",ot:"3조",status:"정회원",paid:false},
+  {id:"m58",name:"옥광수",grade:"41기",hakwhe:"금투",phone:"010-7581-7007",company:"회계법인 아상",title:"댜표",ot:"",status:"정회원",paid:false},
+  {id:"m59",name:"지정근",grade:"41기",hakwhe:"금투",phone:"010-2927-9997",company:"㈜한국스마트물류, (주)한국생활건강",title:"대표이사",ot:"1조",status:"정회원",paid:false},
+  {id:"m60",name:"최은미",grade:"41기",hakwhe:"경관",phone:"010-8631-5414",company:"kt 투자운용",title:"본부장",ot:"4조",status:"정회원",paid:false},
+  {id:"m61",name:"하상윤",grade:"41기",hakwhe:"글프",phone:"010-4812-5121",company:"구성커피로스터스",title:"대표이사",ot:"",status:"비회원",paid:false},
+  {id:"m62",name:"하성민",grade:"41기",hakwhe:"글프",phone:"010-8735-0490",company:"미진산업",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m63",name:"김규남",grade:"40기",hakwhe:"금투",phone:"010-2564-0366",company:"S&I Europe Sp. z o. o.",title:"사업담당",ot:"",status:"비회원",paid:false},
+  {id:"m64",name:"김재형",grade:"40기",hakwhe:"글프",phone:"010-3164-2450",company:"서울보증보험(주)",title:"팀장",ot:"",status:"비회원",paid:false},
+  {id:"m65",name:"성현철",grade:"40기",hakwhe:"건개",phone:"010-2924-7197",company:"닥터스피부과의원",title:"대표원장",ot:"2조",status:"비회원",paid:false},
+  {id:"m66",name:"이성원",grade:"40기",hakwhe:"건개",phone:"010-9883-7884",company:"주식회사 가치 / 부동산 가치 / 공간가치건축사사무소",title:"대표",ot:"",status:"비회원",paid:false},
+  {id:"m67",name:"임동근",grade:"40기",hakwhe:"금투",phone:"010-9080-1236",company:"하나은행",title:"PM",ot:"4조",status:"비회원",paid:false},
+  {id:"m68",name:"전진영",grade:"40기",hakwhe:"경관",phone:"010-3333-0879",company:"오복플란트치과",title:"원장",ot:"",status:"정회원",paid:false},
+  {id:"m69",name:"정지광",grade:"40기",hakwhe:"금투",phone:"010-2232-5142",company:"우리은행",title:"팀장",ot:"3조",status:"비회원",paid:false},
+  {id:"m70",name:"최부승",grade:"40기",hakwhe:"경관",phone:"010-2722-7178",company:"SIFC Property Korea",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m71",name:"홍승만",grade:"40기",hakwhe:"경관",phone:"010-3396-2673",company:"(주)미래채움",title:"대표",ot:"",status:"비회원",paid:false},
+  {id:"m72",name:"황태호",grade:"40기",hakwhe:"금투",phone:"010-2931-7581",company:"DS BAPS KOREA",title:"상무",ot:"",status:"비회원",paid:false},
+  {id:"m73",name:"권소영",grade:"39기",hakwhe:"금투",phone:"010-7193-4037",company:"노무라금융투자(주)",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m74",name:"김남구",grade:"39기",hakwhe:"경관",phone:"010-6244-7847",company:"그린 포레스트 인베스트먼트",title:"대표",ot:"3조",status:"비회원",paid:false},
+  {id:"m75",name:"남소현",grade:"39기",hakwhe:"건개",phone:"010-7558-0525",company:"신현감정평가사사무소,베스트공인중개사사무소",title:"대표",ot:"2조",status:"비회원",paid:false},
+  {id:"m76",name:"노현승",grade:"39기",hakwhe:"건개",phone:"010-3657-4675",company:"부산은행",title:"차장",ot:"",status:"비회원",paid:false},
+  {id:"m77",name:"문성찬",grade:"39기",hakwhe:"경관",phone:"010-6323-1770",company:"이마트",title:"4조",ot:"",status:"비회원",paid:false},
+  {id:"m78",name:"성경화",grade:"39기",hakwhe:"건개",phone:"010-2337-5752",company:"법률사무소도윤",title:"변호사",ot:"",status:"비회원",paid:false},
+  {id:"m79",name:"유민준",grade:"39기",hakwhe:"금투",phone:"010-2717-8610",company:"모비딕자산운용",title:"본부장",ot:"2조",status:"비회원",paid:false},
+  {id:"m80",name:"윤종현",grade:"39기",hakwhe:"금투",phone:"010-8873-2087",company:"NH투자증권",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m81",name:"김대희",grade:"38기",hakwhe:"건개",phone:"010-3837-0010",company:"DNO CORPORATIONS",title:"부서장",ot:"3조",status:"비회원",paid:false},
+  {id:"m82",name:"김태호",grade:"38기",hakwhe:"건개",phone:"010-8708-7805",company:"용인도시공사",title:"차장",ot:"4조",status:"비회원",paid:false},
+  {id:"m83",name:"임광선",grade:"38기",hakwhe:"글프",phone:"010-5507-0369",company:"",title:"이사",ot:"",status:"정회원",paid:false},
+  {id:"m84",name:"정우송",grade:"38기",hakwhe:"경관",phone:"010-5583-6586",company:"Waterline Partners",title:"대표이사",ot:"2조",status:"비회원",paid:false},
+  {id:"m85",name:"정우진",grade:"38기",hakwhe:"글프",phone:"010-2822-8286",company:"주식회사 GMD연구소",title:"차장",ot:"3조",status:"비회원",paid:false},
+  {id:"m86",name:"김기만",grade:"37기",hakwhe:"경관",phone:"010-7728-2285",company:"HL리츠운용",title:"이사",ot:"2조",status:"비회원",paid:false},
+  {id:"m87",name:"김명현",grade:"37기",hakwhe:"건개",phone:"010-6858-8385",company:"넥서스자산운용(주)",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m88",name:"노준철",grade:"37기",hakwhe:"경관",phone:"010-8895-9475",company:"신세계 프라퍼티 디자인커뮤니케이션팀",title:"부장",ot:"3조",status:"비회원",paid:false},
+  {id:"m89",name:"최우식",grade:"37기",hakwhe:"금투",phone:"010-9655-4368",company:"브라이트자산운용",title:"대표이사",ot:"",status:"정회원",paid:false},
+  {id:"m90",name:"김동익",grade:"36기",hakwhe:"건개",phone:"010-7373-2311",company:"법무법인 유준",title:"대표변호사",ot:"",status:"정회원",paid:false},
+  {id:"m91",name:"윤원재",grade:"36기",hakwhe:"경관",phone:"010-8942-0845",company:"문화방송",title:"차장",ot:"",status:"정회원",paid:false},
+  {id:"m92",name:"이종호",grade:"36기",hakwhe:"금투",phone:"010-4809-4486",company:"현대엔지니어링",title:"자산영업팀",ot:"",status:"비회원",paid:false},
+  {id:"m93",name:"김민재",grade:"35기",hakwhe:"건개",phone:"010-2588-5246",company:"법무법인유준",title:"파트너변호사",ot:"",status:"정회원",paid:false},
+  {id:"m94",name:"박상미",grade:"35기",hakwhe:"글프",phone:"010-3956-3235",company:"",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m95",name:"박현희",grade:"35기",hakwhe:"건개",phone:"010-7458-1123",company:"삼성물산 건설부분",title:"프로",ot:"",status:"비회원",paid:false},
+  {id:"m96",name:"신균섭",grade:"35기",hakwhe:"글프",phone:"010-8713-3525",company:"다올컴퍼니㈜",title:"대표이사",ot:"",status:"정회원",paid:false},
+  {id:"m97",name:"이한상",grade:"35기",hakwhe:"금투",phone:"010-3257-5197",company:"삼성생명",title:"부장",ot:"",status:"정회원",paid:false},
+  {id:"m98",name:"이효진",grade:"35기",hakwhe:"경관",phone:"010-8988-7437",company:"SK네트웍스",title:"매니저",ot:"",status:"비회원",paid:false},
+  {id:"m99",name:"성창기",grade:"34기",hakwhe:"글프",phone:"010-3322-1288",company:"교보리얼코주식회사",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m100",name:"신강원",grade:"34기",hakwhe:"경관",phone:"010-2193-4568",company:"넥스트엔터테인먼트월드",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m101",name:"오보예",grade:"34기",hakwhe:"글프",phone:"010-8735-0468",company:"신한은행",title:"Rm",ot:"",status:"비회원",paid:false},
+  {id:"m102",name:"오현건",grade:"34기",hakwhe:"건개",phone:"010-2646-2408",company:"주식회사 지인홀딩스",title:"대표이사",ot:"",status:"비회원",paid:false},
+  {id:"m103",name:"이선경",grade:"34기",hakwhe:"글프",phone:"010-3825-7689",company:"한국ESG연구소/대신금융그룹",title:"센터장",ot:"",status:"비회원",paid:false},
+  {id:"m104",name:"전현준",grade:"34기",hakwhe:"경관",phone:"010-4876-8160",company:"대한소방공제회 부동산투자팀",title:"팀장",ot:"",status:"비회원",paid:false},
+  {id:"m105",name:"현동진",grade:"34기",hakwhe:"금투",phone:"010-2211-2293",company:"한국투자밸류자산운용",title:"부서장",ot:"",status:"비회원",paid:false},
+  {id:"m106",name:"김현욱",grade:"33기",hakwhe:"금투",phone:"010-8651-7411",company:"",title:"",ot:"3조",status:"비회원",paid:false},
+  {id:"m107",name:"김호진",grade:"33기",hakwhe:"경관",phone:"010-6406-2659",company:"이지스자산운용 리얼에셋부문",title:"이사",ot:"",status:"비회원",paid:false},
+  {id:"m108",name:"박명우",grade:"33기",hakwhe:"금투",phone:"010-9389-8252",company:"태평양감정평가법인",title:"상무이사",ot:"",status:"정회원",paid:false},
+  {id:"m109",name:"류석재",grade:"33기",hakwhe:"글프",phone:"010-4526-3055",company:"KB증권 대체투자심사부",title:"차장",ot:"",status:"비회원",paid:false},
+  {id:"m110",name:"장우석",grade:"33기",hakwhe:"경관",phone:"010-5479-4332",company:"KCC글라스",title:"차장",ot:"",status:"비회원",paid:false},
+  {id:"m111",name:"홍성구",grade:"33기",hakwhe:"경관",phone:"010-7502-0508",company:"대한감정평가법인",title:"이사",ot:"",status:"비회원",paid:false},
+  {id:"m112",name:"남기만",grade:"32기",hakwhe:"금투",phone:"010-2094-0330",company:"삼성SRA자산운용",title:"국내투자사업부장",ot:"",status:"비회원",paid:false},
+  {id:"m113",name:"박현준",grade:"32기",hakwhe:"경관",phone:"010-4905-3512",company:"아이엠증권",title:"영업이사대우",ot:"",status:"비회원",paid:false},
+  {id:"m114",name:"이준형",grade:"32기",hakwhe:"경관",phone:"010-3740-9821",company:"서울우리비뇨기과",title:"원장",ot:"",status:"비회원",paid:false},
+  {id:"m115",name:"정동혁",grade:"32기",hakwhe:"금투",phone:"010-4291-2102",company:"미래새한감정평가법인",title:"감평사",ot:"",status:"정회원",paid:false},
+  {id:"m116",name:"최재원",grade:"32기",hakwhe:"글프",phone:"010-8899-7150",company:"Natixis",title:"Managing Director",ot:"",status:"비회원",paid:false},
+  {id:"m117",name:"김노아",grade:"31기",hakwhe:"경관",phone:"010-7334-2230",company:"010-7334-2230",title:"미국변호사",ot:"",status:"비회원",paid:false},
+  {id:"m118",name:"김연태",grade:"31기",hakwhe:"경관",phone:"010-9970-7452",company:"회계법인원",title:"회계사",ot:"",status:"비회원",paid:false},
+  {id:"m119",name:"김창영",grade:"31기",hakwhe:"건개",phone:"010-9149-2621",company:"아이파트너스자산운용",title:"부대표이사/파트너",ot:"",status:"정회원",paid:false},
+  {id:"m120",name:"정윤종",grade:"31기",hakwhe:"글프",phone:"010-9123-3347",company:"LS전선",title:"과장",ot:"",status:"비회원",paid:false},
+  {id:"m121",name:"현상우",grade:"31기",hakwhe:"경관",phone:"010-4000-0064",company:"㈜파리크라상",title:"팀장",ot:"",status:"정회원",paid:false},
+  {id:"m122",name:"김성우",grade:"30기",hakwhe:"건개",phone:"010-8579-8709",company:"디씨에스파트너스",title:"본부장",ot:"",status:"정회원",paid:false},
+  {id:"m123",name:"복동일",grade:"30기",hakwhe:"경관",phone:"010-6713-0522",company:"법무법인(유한) 바른",title:"파트너변호사",ot:"",status:"정회원",paid:false},
+  {id:"m124",name:"신덕희",grade:"30기",hakwhe:"건개",phone:"010-7373-6488",company:"HD Holdings Ltd.",title:"대표이사",ot:"",status:"비회원",paid:false},
+  {id:"m125",name:"이태주",grade:"30기",hakwhe:"건개",phone:"010-5339-0979",company:"HD한국조선해양",title:"수석매니저",ot:"",status:"비회원",paid:false},
+  {id:"m126",name:"최근아",grade:"30기",hakwhe:"경관",phone:"010-5858-0758",company:"JB자산운용",title:"실장/이사",ot:"",status:"정회원",paid:false},
+  {id:"m127",name:"최환영",grade:"30기",hakwhe:"건개",phone:"010-8715-4842",company:"정우개발(주)",title:"상무",ot:"",status:"비회원",paid:false},
+  {id:"m128",name:"곽동욱",grade:"29기",hakwhe:"경관",phone:"010-7997-9966",company:"KY산업, 피데스에셋",title:"대표이사",ot:"",status:"비회원",paid:false},
+  {id:"m129",name:"백종식",grade:"29기",hakwhe:"건개",phone:"010-9060-8983",company:"Savills Korea",title:"이사",ot:"",status:"정회원",paid:false},
+  {id:"m130",name:"서성권",grade:"29기",hakwhe:"금투",phone:"010-3596-8597",company:"대신증권 WM추진부",title:"수석",ot:"",status:"비회원",paid:false},
+  {id:"m131",name:"이상훈",grade:"29기",hakwhe:"건개",phone:"010-9024-1400",company:"GS리테일",title:"투자개발1팀장",ot:"",status:"비회원",paid:false},
+  {id:"m132",name:"이준호",grade:"29기",hakwhe:"경관",phone:"010-4312-3706",company:"한국석유관리원",title:"대리",ot:"",status:"비회원",paid:false},
+  {id:"m133",name:"채상욱",grade:"29기",hakwhe:"경관",phone:"010-9926-7884",company:"업라이즈",title:"크리에이터",ot:"",status:"비회원",paid:false},
+  {id:"m134",name:"권희재",grade:"28기",hakwhe:"글프",phone:"010-8980-8600",company:"",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m135",name:"문주호",grade:"28기",hakwhe:"건개",phone:"010-5225-7295",company:"삼성물산",title:"변호사",ot:"",status:"비회원",paid:false},
+  {id:"m136",name:"미상",grade:"28기",hakwhe:"금투",phone:"010-9727-6780",company:"삼덕회계법인",title:"회계사",ot:"",status:"비회원",paid:false},
+  {id:"m137",name:"김종훤",grade:"27기",hakwhe:"글프",phone:"010-6220-7072",company:"투썸플레이스",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m138",name:"김현곤",grade:"27기",hakwhe:"글프",phone:"010-2995-5510",company:"한국교직원공제회",title:"차장",ot:"",status:"비회원",paid:false},
+  {id:"m139",name:"박형진",grade:"27기",hakwhe:"금투",phone:"010-6710-8008",company:"삼성증권",title:"과장",ot:"",status:"비회원",paid:false},
+  {id:"m140",name:"변희",grade:"27기",hakwhe:"금투",phone:"010-9451-2110",company:"엠플러스자산운용",title:"팀장",ot:"",status:"비회원",paid:false},
+  {id:"m141",name:"이우용",grade:"27기",hakwhe:"건개",phone:"010-9270-1428",company:"서울특별시 SH공사",title:"차장",ot:"",status:"비회원",paid:false},
+  {id:"m142",name:"김린하",grade:"26기",hakwhe:"글프",phone:"010-6767-1626",company:"BRIDGECODE",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m143",name:"최영철",grade:"26기",hakwhe:"금투",phone:"010-8783-1941",company:"KB금융지주",title:"팀장",ot:"",status:"비회원",paid:false},
+  {id:"m144",name:"김범준",grade:"25기",hakwhe:"금투",phone:"010-9072-2450",company:"하나자산운용",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m145",name:"신정섭",grade:"25기",hakwhe:"금투",phone:"010-9168-8318",company:"㈜신한은행투자자문부",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m146",name:"신화달",grade:"25기",hakwhe:"글프",phone:"010-3129-4986",company:"㈜DNSC",title:"대표",ot:"",status:"비회원",paid:false},
+  {id:"m147",name:"오종윤",grade:"25기",hakwhe:"금투",phone:"010-8874-3287",company:"현대인베스트먼트자산운용",title:"팀장",ot:"",status:"비회원",paid:false},
+  {id:"m148",name:"최재혁",grade:"24기",hakwhe:"건개",phone:"010-6283-8401",company:"인텔리안",title:"차장",ot:"",status:"비회원",paid:false},
+  {id:"m149",name:"최재호",grade:"24기",hakwhe:"금투",phone:"010-4478-0179",company:"신승회계법인",title:"공인회계사",ot:"",status:"비회원",paid:false},
+  {id:"m150",name:"최철",grade:"24기",hakwhe:"건개",phone:"010-5274-4046",company:"삼성중공업",title:"시니어 프로",ot:"",status:"정회원",paid:false},
+  {id:"m151",name:"황성현",grade:"24기",hakwhe:"경관",phone:"010-2443-0923",company:"국회",title:"보좌관",ot:"",status:"비회원",paid:false},
+  {id:"m152",name:"권영상",grade:"23기",hakwhe:"건개",phone:"010-9123-3697",company:"신세계",title:"과장",ot:"",status:"비회원",paid:false},
+  {id:"m153",name:"기상연",grade:"23기",hakwhe:"금투",phone:"010-9110-2999",company:"㈜신한은행 종합금융부",title:"차장",ot:"",status:"비회원",paid:false},
+  {id:"m154",name:"김충환",grade:"23기",hakwhe:"건개",phone:"010-4445-2319",company:"㈜코너스톤그룹",title:"대표",ot:"",status:"비회원",paid:false},
+  {id:"m155",name:"임준표",grade:"23기",hakwhe:"금투",phone:"010-2539-3276",company:"법무사임준표사무소",title:"대표",ot:"",status:"비회원",paid:false},
+  {id:"m156",name:"김진우",grade:"22기",hakwhe:"금투",phone:"010-9606-2228",company:"한국토지주택공사",title:"과장",ot:"",status:"비회원",paid:false},
+  {id:"m157",name:"박미례",grade:"22기",hakwhe:"경관",phone:"010-2718-9833",company:"(주)케이티에스테이트",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m158",name:"박현석",grade:"22기",hakwhe:"금투",phone:"010-6341-2268",company:"㈜코람코자산운용",title:"상무",ot:"",status:"비회원",paid:false},
+  {id:"m159",name:"윤호석",grade:"22기",hakwhe:"경관",phone:"010-6208-8181",company:"㈜한화건설 인력팀",title:"매니저",ot:"",status:"비회원",paid:false},
+  {id:"m160",name:"이중현",grade:"22기",hakwhe:"글프",phone:"010-6807-7282",company:"한국토지주택공사",title:"과장",ot:"",status:"비회원",paid:false},
+  {id:"m161",name:"주현열",grade:"22기",hakwhe:"경관",phone:"010-9433-0752",company:"법무법인 프런티어",title:"변호사",ot:"",status:"비회원",paid:false},
+  {id:"m162",name:"기희광",grade:"21기",hakwhe:"경관",phone:"017-326-5647",company:"법무법인 원",title:"변호사",ot:"",status:"비회원",paid:false},
+  {id:"m163",name:"김효명",grade:"21기",hakwhe:"금투",phone:"010-5460-7656",company:"HL리츠운용",title:"이사",ot:"",status:"비회원",paid:false},
+  {id:"m164",name:"박소정",grade:"21기",hakwhe:"글프",phone:"010-9655-8066",company:"Ernst & Young 헝가리",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m165",name:"안겸서",grade:"21기",hakwhe:"글프",phone:"010-8512-9169",company:"푸르덴셜",title:"공인중개사&Lp",ot:"",status:"비회원",paid:false},
+  {id:"m166",name:"이미경",grade:"21기",hakwhe:"경관",phone:"010-3338-1269",company:"광교세무법인",title:"이사/세무사",ot:"",status:"비회원",paid:false},
+  {id:"m167",name:"홍정우",grade:"21기",hakwhe:"건개",phone:"010-8887-6535",company:"세보",title:"이사",ot:"",status:"정회원",paid:false},
+  {id:"m168",name:"김민관",grade:"21기",hakwhe:"금투",phone:"010-3499-5682",company:"유진증권",title:"팀장",ot:"",status:"비회원",paid:false},
+  {id:"m169",name:"김재현",grade:"20기",hakwhe:"글프",phone:"010-5223-3324",company:"국민은행",title:"감평사",ot:"",status:"비회원",paid:false},
+  {id:"m170",name:"박재경",grade:"20기",hakwhe:"건개",phone:"010-2138-5737",company:"그라운드디 (주)",title:"대표이사",ot:"",status:"비회원",paid:false},
+  {id:"m171",name:"이보현",grade:"20기",hakwhe:"경관",phone:"010-4278-1358",company:"우미건설",title:"과장",ot:"",status:"비회원",paid:false},
+  {id:"m172",name:"이상신",grade:"20기",hakwhe:"금투",phone:"010-9666-2445",company:"한국교육개발원",title:"책임전문원",ot:"",status:"비회원",paid:false},
+  {id:"m173",name:"박지수",grade:"19기",hakwhe:"건개",phone:"010-8998-8270",company:"삼성물산 주택사업부",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m174",name:"유지혁",grade:"19기",hakwhe:"글프",phone:"010-2774-6857",company:"(주)중앙방송 J골프",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m175",name:"피동현",grade:"19기",hakwhe:"글프",phone:"010-3866-9640",company:"",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m176",name:"김하림",grade:"18기",hakwhe:"경관",phone:"010-6422-6494",company:"한국감정원 성남지점",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m177",name:"박용훈",grade:"18기",hakwhe:"건개",phone:"010-9066-6635",company:"이평종합건설(주)",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m178",name:"오정빈",grade:"18기",hakwhe:"건개",phone:"010-5278-2833",company:"",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m179",name:"임지윤",grade:"18기",hakwhe:"건개",phone:"010-4123-9005",company:"시티크리에이터",title:"팀장",ot:"",status:"비회원",paid:false},
+  {id:"m180",name:"강여정",grade:"16기",hakwhe:"건개",phone:"010-7120-6183",company:"한국감정원",title:"감정평가사/전임연구원",ot:"",status:"비회원",paid:false},
+  {id:"m181",name:"김지현",grade:"16기",hakwhe:"경관",phone:"010-4042-4879",company:"",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m182",name:"유성호",grade:"16기",hakwhe:"글프",phone:"010-5011-0525",company:"한국토지공사",title:"대리",ot:"",status:"비회원",paid:false},
+  {id:"m183",name:"전재호",grade:"15기",hakwhe:"금투",phone:"010-6255-5621",company:"조선비즈",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m184",name:"김민주",grade:"14기",hakwhe:"금투",phone:"010-6338-7427",company:"LG전자 Mc선행상품기획",title:"차장",ot:"",status:"비회원",paid:false},
+  {id:"m185",name:"최중호",grade:"14기",hakwhe:"건개",phone:"010-5132-8628",company:"동훈에이엠씨",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m186",name:"유자영",grade:"13기",hakwhe:"금투",phone:"010-9496-1886",company:"한국주택금융공사 주택보증부",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m187",name:"강명성",grade:"12기",hakwhe:"건개",phone:"010-3944-5005",company:"(주)신영엠앤디",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m188",name:"이은구",grade:"12기",hakwhe:"글프",phone:"010-9405-1482",company:"Savills Korea 투자자문팀",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m189",name:"박은정",grade:"11기",hakwhe:"경관",phone:"010-7644-3388",company:"한국감정원",title:"과장",ot:"",status:"비회원",paid:false},
+  {id:"m190",name:"천지혜",grade:"11기",hakwhe:"금투",phone:"010-2260-5072",company:"한국토지공사",title:"",ot:"",status:"비회원",paid:false},
+  {id:"m191",name:"김미경",grade:"10기",hakwhe:"건개",phone:"010-9037-9548",company:"CJ 건설 건설본부 ENG팀",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m192",name:"송원준",grade:"7기",hakwhe:"금투",phone:"010-3004-9393",company:"삼성전자",title:"삼성연구소",ot:"",status:"비회원",paid:false},
+  {id:"m193",name:"최수현",grade:"5기",hakwhe:"건개",phone:"019-372-3269",company:"한국감정원",title:"감평사",ot:"",status:"비회원",paid:false},
+  {id:"m194",name:"김현정",grade:"2기",hakwhe:"글프",phone:"010-5100-5929",company:"(주)오스카앤컴퍼니",title:"부장",ot:"",status:"비회원",paid:false},
+  {id:"m195",name:"윤영민",grade:"1기",hakwhe:"글프",phone:"011-9970-8682",company:"대성건설(주)",title:"이사",ot:"",status:"비회원",paid:false}
+];
+const DEFAULT_EVENTS=[
+  {id:"e1",name:"개강파티 & 신입생환영회",date:"2026-04-09",place:"강남역 인근 (TBD)",mapQuery:"강남역+서울",desc:"26년 4월 9일(목) 오후 6시 30분~",attendees:[]},
+  {id:"e2",name:"여의도 건부런 × 다크호스",date:"2026-04-12",place:"여의도공원",mapQuery:"여의도공원+서울",desc:"건국대 부동산학과 달리기 동아리 콜라보 러닝",attendees:[]},
+  {id:"e3",name:"청계산 등산",date:"2026-04-26",place:"청계산 원터골 입구",mapQuery:"청계산+원터골+입구",desc:"봄 정기 청계산 등산 모임",attendees:[]},
+  {id:"e4",name:"올림픽공원 건부런 × 다크호스",date:"2026-05-03",place:"올림픽공원",mapQuery:"올림픽공원+서울",desc:"올림픽공원 러닝 콜라보 2차",attendees:[]},
+  {id:"e5",name:"바다의날 마라톤",date:"2026-05-23",place:"미정",mapQuery:"서울+마라톤",desc:"바다의날 기념 마라톤 대회 단체 참가",attendees:[]},
+  {id:"e6",name:"다크호스 스크린 골프대회",date:"2026-05-28",place:"미정 (스크린골프장)",mapQuery:"스크린골프+서울",desc:"다크호스 회원 친선 스크린 골프대회",attendees:[]},
+  {id:"e7",name:"종강파티",date:"2026-06-18",place:"미정",mapQuery:"강남+파티룸",desc:"2026년 상반기 마무리 종강파티",attendees:[]},
+];
+
+let state={members:[],events:[]};
+let currentTab='home',currentDuesTab='dues',memberFilter='all',currentAttendEventId=null;
+
+function loadState(){
+  const s=localStorage.getItem('darkhorse_v2');
+  if(s){try{state=JSON.parse(s);}catch(e){state={members:[...DEFAULT_MEMBERS],events:[...DEFAULT_EVENTS]};}}
+  else{state={members:JSON.parse(JSON.stringify(DEFAULT_MEMBERS)),events:JSON.parse(JSON.stringify(DEFAULT_EVENTS))};saveState();}
+}
+function saveState(){localStorage.setItem('darkhorse_v2',JSON.stringify(state));}
+function getDDay(d){const t=new Date();t.setHours(0,0,0,0);const ev=new Date(d);ev.setHours(0,0,0,0);const diff=Math.ceil((ev-t)/86400000);if(diff===0)return{label:'D-DAY',cls:'bg-black text-white'};if(diff>0)return{label:'D-'+diff,cls:'bg-gray-100 text-gray-700'};return{label:'종료',cls:'bg-gray-100 text-gray-400'};}
+function fmtDate(s){return new Date(s).toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});}
+function uid(){return 'm'+Date.now()+Math.random().toString(36).slice(2,5);}
+function euid(){return 'e'+Date.now()+Math.random().toString(36).slice(2,5);}
+function hwCls(h){return h?'hw-'+h:'hw-etc';}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',2200);}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+const EI={'개강파티':'🎉','환영회':'🎊','건부런':'🏃','등산':'⛰️','마라톤':'🏅','골프':'⛳','종강파티':'🥂'};
+function gi(n){for(const[k,v]of Object.entries(EI))if(n.includes(k))return v;return'📌';}
+
+function setTab(tab){
+  currentTab=tab;
+  ['home','members','dues'].forEach(t=>{
+    document.getElementById('page-'+t).classList.toggle('hidden',t!==tab);
+    const b=document.getElementById('tab-'+t);
+    b.classList.toggle('tab-active',t===tab);
+    b.classList.toggle('text-gray-400',t!==tab);
+    b.style.fontWeight=t===tab?'700':'400';
+  });
+  if(tab==='home')renderHome();
+  if(tab==='members')renderMembers();
+  if(tab==='dues')renderDues();
+}
+
+function setDuesTab(tab){
+  currentDuesTab=tab;
+  document.getElementById('dues-panel').classList.toggle('hidden',tab!=='dues');
+  document.getElementById('events-panel').classList.toggle('hidden',tab!=='events');
+  ['dues','events'].forEach(t=>{
+    const b=document.getElementById('dtab-'+t);
+    b.classList.toggle('border-b-2',t===tab);b.classList.toggle('border-black',t===tab);
+    b.classList.toggle('font-bold',t===tab);b.classList.toggle('text-gray-400',t!==tab);
+  });
+  if(tab==='dues')renderDues();
+  if(tab==='events')renderEventsMgmt();
+}
+
+function setFilter(f){
+  memberFilter=f;
+  document.querySelectorAll('[id^="filter-"]').forEach(b=>{
+    const active=b.id==='filter-'+f;
+    b.className=active?'btn-black whitespace-nowrap':'btn-outline whitespace-nowrap';
+    b.style.padding='5px 12px';b.style.fontSize='.72rem';
+  });
+  renderMembers();
+}
+
+function renderHome(){
+  const fullM=state.members.filter(m=>m.status==='정회원');
+  const paidM=fullM.filter(m=>m.paid);
+  const rate=fullM.length?Math.round(paidM.length/fullM.length*100):0;
+  document.getElementById('stat-total').textContent=state.members.length;
+  document.getElementById('stat-full').textContent=fullM.length;
+  document.getElementById('stat-rate').textContent=rate+'%';
+  const today=new Date();today.setHours(0,0,0,0);
+  const upcoming=[...state.events].filter(e=>new Date(e.date)>=today).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const c=document.getElementById('upcoming-events');
+  if(!upcoming.length){c.innerHTML='<p class="text-gray-400 text-sm text-center py-8">예정된 행사가 없습니다</p>';return;}
+  c.innerHTML=upcoming.map(ev=>{
+    const dd=getDDay(ev.date);
+    return`<div class="border border-gray-100 rounded-2xl p-4 mb-3 card-hover">
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="flex items-center gap-2">
+          <span style="font-size:1.2rem;">${gi(ev.name)}</span>
+          <button onclick="openEventDetail('${ev.id}')" class="font-bold text-sm hover:underline text-left">${ev.name}</button>
+        </div>
+        <span class="text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap ${dd.cls}">${dd.label}</span>
+      </div>
+      <div class="text-gray-400 text-xs mb-1">📅 ${fmtDate(ev.date)}</div>
+      <div class="text-gray-400 text-xs mb-3">📍 ${ev.place} <a href="https://maps.google.com/?q=${ev.mapQuery}" target="_blank" class="ml-1 text-blue-500 underline">지도보기</a></div>
+      <div class="flex items-center justify-between">
+        <button onclick="openEventDetail('${ev.id}')" class="text-xs text-gray-500 hover:underline">👥 ${(ev.attendees||[]).length}명 참석예정</button>
+        <button onclick="openAttendModal('${ev.id}')" class="btn-black" style="padding:6px 14px;font-size:.72rem;">✋ 참가 신청</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEventDetail(id){
+  const ev=state.events.find(e=>e.id===id);if(!ev)return;
+  const att=(ev.attendees||[]).map(mid=>state.members.find(m=>m.id===mid)).filter(Boolean);
+  document.getElementById('modal-event-detail-content').innerHTML=`
+    <div class="flex items-center gap-2 mb-2"><span style="font-size:1.3rem;">${gi(ev.name)}</span><h3 class="font-bold text-base">${ev.name}</h3></div>
+    <p class="text-gray-400 text-xs mb-1">📅 ${fmtDate(ev.date)}</p>
+    <p class="text-gray-400 text-xs mb-1">📍 ${ev.place}</p>
+    ${ev.desc?`<p class="text-gray-500 text-xs mb-4">${ev.desc}</p>`:'<div class="mb-4"></div>'}
+    <div class="flex items-center justify-between mb-3">
+      <h4 class="font-bold text-sm">참석 예정 (${att.length}명)</h4>
+      <button onclick="closeModal('modal-event-detail');openAttendModal('${ev.id}')" class="text-xs underline text-gray-500">참가신청 →</button>
+    </div>
+    ${att.length?`<div class="space-y-2">${att.map(m=>`
+      <div class="flex items-center gap-3 py-1.5 border-b border-gray-50">
+        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold flex-shrink-0">${m.name[0]}</div>
+        <div><div class="text-sm font-medium">${m.name}</div><div class="text-xs text-gray-400">${m.grade}${m.company?' · '+m.company:''}</div></div>
+      </div>`).join('')}</div>`
+    :'<p class="text-gray-400 text-sm text-center py-6">아직 참석 신청이 없습니다</p>'}
+    <button onclick="closeModal('modal-event-detail')" class="btn-black w-full mt-4">닫기</button>`;
+  openModal('modal-event-detail');
+}
+
+function openAttendModal(id){
+  currentAttendEventId=id;
+  const ev=state.events.find(e=>e.id===id);
+  document.getElementById('modal-attend-title').textContent=(ev?ev.name:'')+' — 참가 신청';
+  document.getElementById('attend-search').value='';
+  renderAttendSearch();openModal('modal-attend');
+}
+
+function renderAttendSearch(){
+  const q=document.getElementById('attend-search').value.toLowerCase();
+  const ev=state.events.find(e=>e.id===currentAttendEventId);
+  const att=ev?(ev.attendees||[]):[];
+  const list=state.members.filter(m=>!q||m.name.includes(q)||m.grade.includes(q));
+  document.getElementById('attend-list').innerHTML=list.map(m=>{
+    const isAtt=att.includes(m.id);
+    return`<div class="flex items-center justify-between py-2 border-b border-gray-50">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold">${m.name[0]}</div>
+        <div><span class="text-sm font-medium">${m.name}</span><span class="text-xs text-gray-400 ml-1">${m.grade}</span></div>
+      </div>
+      <button onclick="toggleAttend('${m.id}')" class="${isAtt?'chip-yes':'chip-no'}">${isAtt?'✓ 신청됨':'+ 신청'}</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleAttend(mid){
+  const ev=state.events.find(e=>e.id===currentAttendEventId);if(!ev)return;
+  if(!ev.attendees)ev.attendees=[];
+  const idx=ev.attendees.indexOf(mid);
+  if(idx===-1){ev.attendees.push(mid);showToast('✅ 참가 신청 완료!');}
+  else{ev.attendees.splice(idx,1);showToast('참가 취소');}
+  saveState();renderAttendSearch();renderHome();
+}
+
+function renderMembers(){
+  const q=(document.getElementById('member-search')?.value||'').toLowerCase();
+  const list=state.members.filter(m=>{
+    if(q&&!m.name.includes(q)&&!m.grade.includes(q)&&!(m.company||'').toLowerCase().includes(q))return false;
+    if(memberFilter==='all')return true;
+    if(memberFilter==='정회원'||memberFilter==='비회원')return m.status===memberFilter;
+    return m.hakwhe===memberFilter;
+  });
+  document.getElementById('member-count').textContent=list.length+'명 표시';
+  document.getElementById('member-list').innerHTML=list.map(m=>`
+    <div onclick="openMemberDetail('${m.id}')" class="flex items-center gap-3 border border-gray-100 rounded-xl p-3 mb-2 card-hover">
+      <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-sm flex-shrink-0">${m.name[0]}</div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="font-bold text-sm">${m.name}</span>
+          ${m.hakwhe?`<span class="${hwCls(m.hakwhe)}">${m.hakwhe}</span>`:''}
+          <span class="${m.status==='정회원'?'badge-mem':'badge-non'}">${m.status}</span>
+        </div>
+        <div class="text-xs text-gray-400 mt-0.5 truncate">${m.grade}${m.company?' · '+m.company:''}${m.title?' · '+m.title:''}</div>
+      </div>
+      <span style="color:#d1d5db;font-size:1rem;">›</span>
+    </div>`).join('')||'<p class="text-center text-gray-400 text-sm py-8">검색 결과 없음</p>';
+}
+
+function openMemberDetail(id){
+  const m=state.members.find(x=>x.id===id);if(!m)return;
+  const attended=state.events.filter(e=>(e.attendees||[]).includes(id));
+  document.getElementById('modal-member-content').innerHTML=`
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center font-black text-2xl">${m.name[0]}</div>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap mb-1">
+          <span class="font-black text-lg">${m.name}</span>
+          ${m.hakwhe?`<span class="${hwCls(m.hakwhe)}">${m.hakwhe}</span>`:''}
+          <span class="${m.status==='정회원'?'badge-mem':'badge-non'}">${m.status}</span>
+          ${m.status==='정회원'?`<span class="${m.paid?'badge-ok':'badge-no'}">${m.paid?'완납':'미납'}</span>`:''}
+        </div>
+        <div class="text-gray-400 text-xs">${m.grade}${m.ot?' · '+m.ot:''}</div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mb-4">
+      ${m.company?`<div class="bg-gray-50 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">회사/소속</div><div class="text-sm font-medium">${m.company}</div></div>`:''}
+      ${m.title?`<div class="bg-gray-50 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">직함</div><div class="text-sm font-medium">${m.title}</div></div>`:''}
+      ${m.phone?`<div class="bg-gray-50 rounded-xl p-3 col-span-2"><div class="text-xs text-gray-400 mb-1">연락처</div><a href="tel:${m.phone}" class="text-sm font-medium text-blue-600">${m.phone}</a></div>`:''}
+    </div>
+    ${attended.length?`<div class="mb-4"><div class="text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">참석 행사</div><div class="space-y-1.5">${attended.map(e=>`<div class="flex justify-between text-xs border-b border-gray-50 pb-1.5"><span>${e.name}</span><span class="text-gray-400">${fmtDate(e.date)}</span></div>`).join('')}</div></div>`:''}
+    <button onclick="closeModal('modal-member')" class="btn-black w-full">닫기</button>`;
+  openModal('modal-member');
+}
+
+function addMember(){
+  const name=document.getElementById('add-name').value.trim();
+  const grade=document.getElementById('add-grade').value.trim();
+  if(!name||!grade){showToast('⚠️ 성함과 기수는 필수입니다');return;}
+  state.members.push({id:uid(),name,grade,hakwhe:document.getElementById('add-hakwhe').value,status:document.getElementById('add-status').value,company:document.getElementById('add-company').value.trim(),title:document.getElementById('add-title').value.trim(),phone:document.getElementById('add-phone').value.trim(),ot:document.getElementById('add-ot').value.trim(),paid:false});
+  saveState();
+  ['add-name','add-grade','add-company','add-title','add-phone','add-ot'].forEach(i=>document.getElementById(i).value='');
+  closeModal('modal-add-member');renderMembers();renderHome();showToast('✅ 원우가 추가되었습니다!');
+}
+
+function renderDues(){
+  const fullM=state.members.filter(m=>m.status==='정회원');
+  const paidM=fullM.filter(m=>m.paid);
+  const rate=fullM.length?Math.round(paidM.length/fullM.length*100):0;
+  document.getElementById('dues-total').textContent=fullM.length;
+  document.getElementById('dues-paid').textContent=paidM.length;
+  document.getElementById('dues-unpaid').textContent=fullM.length-paidM.length;
+  document.getElementById('dues-rate-text').textContent=rate+'%';
+  document.getElementById('dues-bar').style.width=rate+'%';
+  document.getElementById('dues-list').innerHTML=fullM.map(m=>`
+    <div class="flex items-center gap-3 border border-gray-100 rounded-xl p-3 mb-2">
+      <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center font-bold text-sm flex-shrink-0">${m.name[0]}</div>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-sm">${m.name}</div>
+        <div class="text-xs text-gray-400">${m.grade}${m.hakwhe?' · '+m.hakwhe:''}</div>
+      </div>
+      <button onclick="togglePaid('${m.id}')" class="toggle-paid ${m.paid?'bg-black text-white':'bg-white text-gray-500 border border-gray-200'}">${m.paid?'✓ 완납':'미납'}</button>
+    </div>`).join('');
+}
+
+function togglePaid(id){
+  const m=state.members.find(x=>x.id===id);if(!m)return;
+  m.paid=!m.paid;saveState();renderDues();renderHome();
+  showToast(m.paid?'✅ 완납 처리!':'↩️ 미납으로 변경');
+}
+
+function renderEventsMgmt(){
+  const sorted=[...state.events].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  document.getElementById('events-mgmt-list').innerHTML=sorted.map(ev=>{
+    const dd=getDDay(ev.date);
+    const att=(ev.attendees||[]).map(id=>state.members.find(m=>m.id===id)).filter(Boolean);
+    return`<div class="border border-gray-100 rounded-2xl p-4 mb-3">
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="flex items-center gap-2"><span style="font-size:1.1rem;">${gi(ev.name)}</span><span class="font-bold text-sm">${ev.name}</span></div>
+        <span class="text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap ${dd.cls}">${dd.label}</span>
+      </div>
+      <div class="text-xs text-gray-400 mb-1">📅 ${fmtDate(ev.date)}</div>
+      <div class="text-xs text-gray-400 mb-3">📍 ${ev.place}</div>
+      <div class="flex items-center justify-between">
+        <button onclick="openEventDetail('${ev.id}')" class="text-xs text-gray-500 underline">👥 참석자 ${att.length}명 보기</button>
+        <button onclick="openAttendModal('${ev.id}')" class="text-xs border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50">✋ 참가 신청</button>
+      </div>
+      ${att.length?`<div class="flex flex-wrap gap-1 mt-2">${att.slice(0,8).map(m=>`<span class="text-xs bg-gray-100 rounded-full px-2 py-0.5">${m.name}</span>`).join('')}${att.length>8?`<span class="text-xs text-gray-400">+${att.length-8}명</span>`:''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function addEvent(){
+  const name=document.getElementById('ev-name').value.trim();
+  const date=document.getElementById('ev-date').value;
+  if(!name||!date){showToast('⚠️ 행사명과 날짜는 필수입니다');return;}
+  const place=document.getElementById('ev-place').value.trim();
+  state.events.push({id:euid(),name,date,place:place||'미정',mapQuery:encodeURIComponent(place||name),desc:document.getElementById('ev-desc').value.trim(),attendees:[]});
+  saveState();
+  ['ev-name','ev-date','ev-place','ev-desc'].forEach(i=>document.getElementById(i).value='');
+  closeModal('modal-add-event');renderEventsMgmt();renderHome();showToast('✅ 행사가 추가되었습니다!');
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='darkhorse_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  showToast('📥 데이터 내보내기 완료!');
+}
+function importData(){
+  try{
+    const json=JSON.parse(document.getElementById('import-json').value);
+    if(!json.members||!json.events)throw new Error('올바른 형식이 아닙니다');
+    state=json;saveState();document.getElementById('import-json').value='';
+    closeModal('modal-admin');renderHome();renderMembers();renderDues();showToast('✅ 데이터를 가져왔습니다!');
+  }catch(e){showToast('❌ 오류: '+e.message);}
+}
+function resetData(){
+  state={members:JSON.parse(JSON.stringify(DEFAULT_MEMBERS)),events:JSON.parse(JSON.stringify(DEFAULT_EVENTS))};
+  saveState();closeModal('modal-admin');renderHome();renderMembers();renderDues();showToast('🔄 데이터 초기화 완료');
+}
+function openAdminModal(){openModal('modal-admin');}
+
+window.addEventListener('load',()=>{loadState();setTab('home');});
+</script>
+</body>
+</html>
