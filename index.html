@@ -339,7 +339,7 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
     <div class="space-y-3">
       <button onclick="uploadSeedData()" class="btn-outline w-full">📤 초기 데이터 업로드 (최초 1회)</button>
       <hr class="border-gray-100"/>
-      <button onclick="if(confirm('초기화?')){resetAll()}" class="w-full text-red-500 border border-red-200 rounded-lg py-2.5 text-sm font-bold">🗑 데이터 초기화</button>
+      <button onclick="confirmReset()" class="w-full text-red-500 border border-red-200 rounded-lg py-2.5 text-sm font-bold">🗑 데이터 초기화</button>
     </div>
     <button onclick="closeModal('modal-admin')" class="btn-black w-full mt-4">닫기</button>
   </div>
@@ -624,6 +624,16 @@ async function uploadSeedData(){
   }catch(e){showToast('❌ 오류: '+e.message);}
 }
 
+function confirmReset(){
+  const code = prompt('⚠️ 데이터 초기화는 되돌릴 수 없습니다!\n\n관리자 코드를 입력하세요:');
+  if(code === null) return;
+  if(code !== ADMIN_CODE){
+    alert('❌ 관리자 코드가 틀렸습니다. 초기화가 취소되었습니다.');
+    return;
+  }
+  if(!confirm('정말로 모든 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다!')){return;}
+  resetAll();
+}
 async function resetAll(){
   try{
     const mSnap = await fs.getDocs(fs.collection(db,'members'));
