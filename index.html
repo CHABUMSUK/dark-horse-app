@@ -115,6 +115,7 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
   <div id="page-members" class="hidden">
     <div class="flex items-center justify-between mb-4">
       <h2 class="font-bold text-base">👥 회원 명부 <span id="mem-badge" class="text-gray-400 font-normal text-sm"></span></h2>
+      <button id="btn-add-member" onclick="openModal('modal-add-member')" class="btn-black hidden" style="padding:6px 13px;font-size:.72rem;">＋ 원우 추가</button>
     </div>
     <div class="relative mb-3">
       <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);">🔍</span>
@@ -175,6 +176,36 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
 </main>
 
 <!-- ═══ MODALS ═══ -->
+
+<!-- 회원 추가 (관리자) -->
+<div id="modal-add-member" class="modal-bg hidden" onclick="closeModal('modal-add-member')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <h3 class="font-bold text-base mb-4">👤 원우 추가</h3>
+    <input type="hidden" id="new-mid"/>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="text-xs text-gray-500 mb-1 block">성함 *</label><input id="new-mname" placeholder="홍길동"/></div>
+        <div><label class="text-xs text-gray-500 mb-1 block">기수 *</label><input id="new-mgrade" placeholder="49기"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="text-xs text-gray-500 mb-1 block">학회</label>
+          <select id="new-mhakwhe"><option value="">선택</option><option>건개</option><option>금투</option><option>경관</option><option>글프</option></select></div>
+        <div><label class="text-xs text-gray-500 mb-1 block">회원구분</label>
+          <select id="new-mstatus"><option value="정회원">정회원</option><option value="비회원">비회원</option></select></div>
+      </div>
+      <div><label class="text-xs text-gray-500 mb-1 block">소속/회사</label><input id="new-mcompany" placeholder="회사명"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">직함</label><input id="new-mtitle" placeholder="대표이사"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">연락처</label><input id="new-mphone" placeholder="010-0000-0000"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">OT조</label><input id="new-mot" placeholder="1조"/></div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="addMember()" class="btn-black flex-1">추가 완료</button>
+      <button onclick="closeModal('modal-add-member')" class="btn-outline">취소</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- 회원 상세 -->
 <div id="modal-member" class="modal-bg hidden" onclick="closeModal('modal-member')">
@@ -527,6 +558,7 @@ function doUnlock(){
   if(document.getElementById('lock-pw').value===ADMIN_CODE){
     adminOk=true;
     document.getElementById('lock-wrap').classList.add('hidden');
+    document.getElementById('btn-add-member').classList.remove('hidden');
     gotoTab('dues');
   }else document.getElementById('lock-err').classList.remove('hidden');
 }
@@ -890,6 +922,33 @@ function addSem(){
   if(D.semesters.includes(n)){showToast('이미 존재합니다');return;}
   D.semesters.push(n);saveLocal();document.getElementById('asem-name').value='';
   curSem=n;closeModal('modal-add-sem');renderEvList();showToast('✅ 학기 추가!');
+}
+
+
+/* ── ADD MEMBER ── */
+function addMember(){
+  const name=document.getElementById('new-mname').value.trim();
+  const grade=document.getElementById('new-mgrade').value.trim();
+  if(!name||!grade){showToast('⚠️ 성함과 기수는 필수입니다');return;}
+  const newM={
+    id:'m'+Date.now(),
+    name,grade,
+    hakwhe:document.getElementById('new-mhakwhe').value,
+    status:document.getElementById('new-mstatus').value,
+    company:document.getElementById('new-mcompany').value.trim(),
+    title:document.getElementById('new-mtitle').value.trim(),
+    phone:document.getElementById('new-mphone').value.trim(),
+    ot:document.getElementById('new-mot').value.trim(),
+    paid:false
+  };
+  D.members.push(newM);
+  saveLocal();
+  ['new-mname','new-mgrade','new-mcompany','new-mtitle','new-mphone','new-mot'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('new-mhakwhe').value='';
+  document.getElementById('new-mstatus').value='정회원';
+  closeModal('modal-add-member');
+  renderMembers();renderHome();
+  showToast('✅ 원우가 추가되었습니다! GitHub 동기화를 잊지 마세요.');
 }
 
 /* ── INIT ── */
