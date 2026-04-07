@@ -2,11 +2,32 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8"/>
-<!-- DARK HORSE v2.1 - FIXED -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>DARK HORSE — 78 다크호스</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBfPUT9bMRxk9HV1CM57b6_KXfkezHK0b0",
+  authDomain: "dark-horse-ba95f.firebaseapp.com",
+  projectId: "dark-horse-ba95f",
+  storageBucket: "dark-horse-ba95f.firebasestorage.app",
+  messagingSenderId: "75201497580",
+  appId: "1:75201497580:web:4fbe6b235f9d7223da98c9",
+  measurementId: "G-PVYLXTDB4W"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window._db = db;
+window._fs = { collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, arrayUnion, arrayRemove, getDocs };
+window._dbReady = true;
+window.dispatchEvent(new Event('db-ready'));
+</script>
 <style>
 *{font-family:'Noto Sans KR',sans-serif;box-sizing:border-box;}
 .playfair{font-family:'Playfair Display',serif;}
@@ -38,6 +59,12 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
 .sem-btn.on{background:#000;color:#fff;border-color:#000;}
 .lock-wrap{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:100;display:flex;align-items:center;justify-content:center;}
 .lock-card{background:#fff;border-radius:22px;padding:34px 28px;width:292px;text-align:center;}
+.fb-status{display:flex;align-items:center;gap:4px;font-size:.65rem;}
+.fb-dot{width:7px;height:7px;border-radius:50%;}
+.fb-dot.on{background:#22c55e;}
+.fb-dot.off{background:#ef4444;}
+.fb-dot.loading{background:#f59e0b;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px;}
 </style>
@@ -50,8 +77,7 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
     <div style="font-size:2.6rem;margin-bottom:8px;">🔐</div>
     <div class="font-black text-lg mb-1">관리자 인증</div>
     <div class="text-gray-400 text-sm mb-4">관리자 코드를 입력하세요</div>
-    <input type="password" id="lock-pw" maxlength="10"
-      placeholder="••••"
+    <input type="password" id="lock-pw" maxlength="10" placeholder="••••"
       style="text-align:center;letter-spacing:8px;font-size:1.5rem;margin-bottom:12px;"
       oninput="document.getElementById('lock-err').classList.add('hidden')"/>
     <button onclick="doUnlock()" class="btn-black w-full mb-2">확인</button>
@@ -71,7 +97,10 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <span id="sync-dot" class="text-xs text-green-500"></span>
+      <div class="fb-status">
+        <div id="fb-dot" class="fb-dot loading"></div>
+        <span id="fb-txt" class="text-gray-400">연결 중…</span>
+      </div>
       <button onclick="openModal('modal-admin')" class="border border-gray-200 rounded-lg px-3 py-1.5 text-gray-400 hover:text-black text-xs">⚙ 관리</button>
     </div>
   </div>
@@ -88,16 +117,21 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
 
 <main class="max-w-2xl mx-auto px-4 pb-16" style="padding-top:106px;">
 
+  <!-- 로딩 -->
+  <div id="page-loading" class="flex flex-col items-center justify-center py-20">
+    <div style="font-size:3rem;margin-bottom:12px;">🐴</div>
+    <div class="text-gray-400 text-sm">Firebase 연결 중…</div>
+  </div>
+
   <!-- HOME -->
-  <div id="page-home">
+  <div id="page-home" class="hidden">
     <div class="text-center py-6">
       <img src="https://raw.githubusercontent.com/CHABUMSUK/dark-horse-app/main/Logo.png"
-           alt="DARK HORSE" style="width:200px;height:200px;object-fit:contain;margin:0 auto 8px;display:block;"/>
+           alt="DARK HORSE" style="width:180px;height:180px;object-fit:contain;margin:0 auto 8px;display:block;"/>
       <h1 class="playfair text-3xl font-bold tracking-widest mb-1">DARK HORSE</h1>
       <p class="text-gray-500 text-sm mb-1">건국대학교 부동산대학원</p>
       <p class="text-gray-400" style="font-size:.72rem;">2026, 다시 뛰는 다크호스! 78년생 말띠들의 거침없는 질주</p>
     </div>
-    <!-- 통계 (납부율 제거) -->
     <div class="grid grid-cols-2 gap-3 mb-6">
       <div class="border border-gray-100 rounded-2xl p-4 text-center card-hover">
         <div class="text-2xl font-black" id="stat-total">—</div>
@@ -135,14 +169,12 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
     <div id="mem-list"></div>
   </div>
 
-  <!-- DUES (관리자 전용) -->
+  <!-- DUES -->
   <div id="page-dues" class="hidden">
     <div class="flex border-b border-gray-100 mb-4">
       <button onclick="setDTab('dues')"   id="dt-dues"   class="flex-1 py-2.5 text-center font-bold border-b-2 border-black text-sm">💰 회비</button>
       <button onclick="setDTab('events')" id="dt-events" class="flex-1 py-2.5 text-center text-gray-400 text-sm">📅 행사</button>
     </div>
-
-    <!-- 회비 패널 -->
     <div id="panel-dues">
       <div class="grid grid-cols-2 gap-2 mb-4">
         <div class="bg-gray-50 rounded-xl p-3 text-center"><div class="font-black text-xl text-green-600" id="d-paid">—</div><div class="text-gray-400 text-xs mt-0.5">완납</div></div>
@@ -152,13 +184,10 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
         <div class="flex justify-between mb-1"><span class="text-xs text-gray-400">납부율</span><span class="text-xs font-bold" id="d-pct">0%</span></div>
         <div class="bg-gray-100 rounded-full h-2"><div id="d-bar" class="bg-black rounded-full h-2 transition-all" style="width:0%"></div></div>
       </div>
-      <p class="text-gray-400 text-xs mb-3">* 버튼을 클릭하면 납부 상태가 변경됩니다</p>
+      <p class="text-gray-400 text-xs mb-3">* 버튼을 클릭하면 즉시 모든 회원에게 반영됩니다 🔥</p>
       <div id="dues-list"></div>
     </div>
-
-    <!-- 행사 패널 -->
     <div id="panel-events" class="hidden">
-      <!-- 학기 탭 -->
       <div class="mb-4">
         <div class="flex items-center justify-between mb-2">
           <span class="font-bold text-sm">학기 선택</span>
@@ -173,17 +202,79 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
       <div id="ev-list"></div>
     </div>
   </div>
-
 </main>
 
-<!-- ═══ MODALS ═══ -->
+<!-- MODALS -->
+<div id="modal-member" class="modal-bg hidden" onclick="closeModal('modal-member')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <div id="modal-member-body"></div>
+  </div>
+</div>
 
-<!-- 회원 추가 (관리자) -->
+<div id="modal-medit" class="modal-bg hidden" onclick="closeModal('modal-medit')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <h3 class="font-bold text-base mb-4">✏️ 회원 정보 수정</h3>
+    <input type="hidden" id="medit-id"/>
+    <div class="space-y-3">
+      <div><label class="text-xs text-gray-500 mb-1 block">소속/회사</label><input id="medit-company"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">직함</label><input id="medit-title"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">회원 구분</label>
+        <select id="medit-status"><option value="정회원">정회원</option><option value="비회원">비회원</option></select></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">연락처</label><input id="medit-phone"/></div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="saveMemberEdit()" class="btn-black flex-1">저장</button>
+      <button onclick="closeModal('modal-medit')" class="btn-outline">취소</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-ev-detail" class="modal-bg hidden" onclick="closeModal('modal-ev-detail')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <div id="modal-ev-detail-body"></div>
+  </div>
+</div>
+
+<div id="modal-eedit" class="modal-bg hidden" onclick="closeModal('modal-eedit')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <h3 class="font-bold text-base mb-4">✏️ 행사 수정</h3>
+    <input type="hidden" id="eedit-id"/>
+    <div class="space-y-3">
+      <div><label class="text-xs text-gray-500 mb-1 block">행사명 *</label><input id="eedit-name"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">날짜 *</label><input id="eedit-date" type="date"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">장소</label><input id="eedit-place"/></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">학기</label><select id="eedit-sem"></select></div>
+      <div><label class="text-xs text-gray-500 mb-1 block">설명</label><textarea id="eedit-desc" rows="2" style="resize:none;"></textarea></div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="saveEvEdit()" class="btn-black flex-1">저장</button>
+      <button onclick="closeModal('modal-eedit')" class="btn-outline">취소</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-attend" class="modal-bg hidden" onclick="closeModal('modal-attend')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
+    <h3 class="font-bold text-base mb-1" id="attend-title">참가 신청</h3>
+    <p class="text-gray-400 text-xs mb-3">참석할 원우를 선택하세요</p>
+    <div class="relative mb-3">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);">🔍</span>
+      <input type="text" id="attend-q" style="padding-left:32px;" placeholder="이름 검색…" oninput="renderAttend()"/>
+    </div>
+    <div id="attend-list" class="max-h-64 overflow-y-auto"></div>
+    <button onclick="closeModal('modal-attend')" class="btn-black w-full mt-4">완료</button>
+  </div>
+</div>
+
 <div id="modal-add-member" class="modal-bg hidden" onclick="closeModal('modal-add-member')">
   <div class="modal-box" onclick="event.stopPropagation()">
     <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
     <h3 class="font-bold text-base mb-4">👤 원우 추가</h3>
-    <input type="hidden" id="new-mid"/>
     <div class="space-y-3">
       <div class="grid grid-cols-2 gap-2">
         <div><label class="text-xs text-gray-500 mb-1 block">성함 *</label><input id="new-mname" placeholder="홍길동"/></div>
@@ -207,79 +298,6 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
   </div>
 </div>
 
-
-<!-- 회원 상세 -->
-<div id="modal-member" class="modal-bg hidden" onclick="closeModal('modal-member')">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
-    <div id="modal-member-body"></div>
-  </div>
-</div>
-
-<!-- 회원 정보 수정 -->
-<div id="modal-medit" class="modal-bg hidden" onclick="closeModal('modal-medit')">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
-    <h3 class="font-bold text-base mb-4">✏️ 회원 정보 수정</h3>
-    <input type="hidden" id="medit-id"/>
-    <div class="space-y-3">
-      <div><label class="text-xs text-gray-500 mb-1 block">소속/회사</label><input id="medit-company" placeholder="소속 또는 회사명"/></div>
-      <div><label class="text-xs text-gray-500 mb-1 block">직함</label><input id="medit-title" placeholder="직함"/></div>
-      <div><label class="text-xs text-gray-500 mb-1 block">회원 구분</label>
-        <select id="medit-status"><option value="정회원">정회원</option><option value="비회원">비회원</option></select></div>
-      <div><label class="text-xs text-gray-500 mb-1 block">연락처</label><input id="medit-phone" placeholder="010-0000-0000"/></div>
-    </div>
-    <div class="flex gap-2 mt-5">
-      <button onclick="saveMemberEdit()" class="btn-black flex-1">저장</button>
-      <button onclick="closeModal('modal-medit')" class="btn-outline">취소</button>
-    </div>
-  </div>
-</div>
-
-<!-- 행사 상세 -->
-<div id="modal-ev-detail" class="modal-bg hidden" onclick="closeModal('modal-ev-detail')">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
-    <div id="modal-ev-detail-body"></div>
-  </div>
-</div>
-
-<!-- 행사 수정 -->
-<div id="modal-eedit" class="modal-bg hidden" onclick="closeModal('modal-eedit')">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
-    <h3 class="font-bold text-base mb-4">✏️ 행사 수정</h3>
-    <input type="hidden" id="eedit-id"/>
-    <div class="space-y-3">
-      <div><label class="text-xs text-gray-500 mb-1 block">행사명 *</label><input id="eedit-name"/></div>
-      <div><label class="text-xs text-gray-500 mb-1 block">날짜 *</label><input id="eedit-date" type="date"/></div>
-      <div><label class="text-xs text-gray-500 mb-1 block">장소</label><input id="eedit-place"/></div>
-      <div><label class="text-xs text-gray-500 mb-1 block">학기</label><select id="eedit-sem"></select></div>
-      <div><label class="text-xs text-gray-500 mb-1 block">설명</label><textarea id="eedit-desc" rows="2" style="resize:none;"></textarea></div>
-    </div>
-    <div class="flex gap-2 mt-5">
-      <button onclick="saveEvEdit()" class="btn-black flex-1">저장</button>
-      <button onclick="closeModal('modal-eedit')" class="btn-outline">취소</button>
-    </div>
-  </div>
-</div>
-
-<!-- 참가 신청 -->
-<div id="modal-attend" class="modal-bg hidden" onclick="closeModal('modal-attend')">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
-    <h3 class="font-bold text-base mb-1" id="attend-title">참가 신청</h3>
-    <p class="text-gray-400 text-xs mb-3">참석할 원우를 선택하세요</p>
-    <div class="relative mb-3">
-      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);">🔍</span>
-      <input type="text" id="attend-q" style="padding-left:32px;" placeholder="이름 검색…" oninput="renderAttend()"/>
-    </div>
-    <div id="attend-list" class="max-h-64 overflow-y-auto"></div>
-    <button onclick="closeModal('modal-attend')" class="btn-black w-full mt-4">완료</button>
-  </div>
-</div>
-
-<!-- 행사 추가 -->
 <div id="modal-add-ev" class="modal-bg hidden" onclick="closeModal('modal-add-ev')">
   <div class="modal-box" onclick="event.stopPropagation()">
     <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
@@ -298,7 +316,6 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
   </div>
 </div>
 
-<!-- 학기 추가 -->
 <div id="modal-add-sem" class="modal-bg hidden" onclick="closeModal('modal-add-sem')">
   <div class="modal-box" onclick="event.stopPropagation()">
     <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
@@ -311,18 +328,16 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
   </div>
 </div>
 
-<!-- 관리자 설정 -->
 <div id="modal-admin" class="modal-bg hidden" onclick="closeModal('modal-admin')">
   <div class="modal-box" onclick="event.stopPropagation()">
     <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
     <h3 class="font-bold text-base mb-4">⚙️ 관리자 설정</h3>
+    <div class="bg-green-50 rounded-xl p-3 text-center mb-4">
+      <div class="text-sm font-bold text-green-700 mb-1">🔥 Firebase 실시간 연동</div>
+      <div class="text-xs text-green-600">변경사항이 즉시 모든 회원에게 반영됩니다</div>
+    </div>
     <div class="space-y-3">
-      <div class="bg-gray-50 rounded-xl p-3 text-center mb-1">
-        <div class="text-sm font-bold mb-1">✅ 자동 저장 활성화</div>
-        <div class="text-xs text-gray-400">변경사항이 자동으로 GitHub에 저장됩니다</div>
-      </div>
-      <button onclick="ghPush()" class="btn-black w-full">☁️ 지금 즉시 동기화</button>
-      <button onclick="ghPull()" class="btn-outline w-full">🔄 GitHub에서 최신 불러오기</button>
+      <button onclick="uploadSeedData()" class="btn-outline w-full">📤 초기 데이터 업로드 (최초 1회)</button>
       <hr class="border-gray-100"/>
       <button onclick="if(confirm('초기화?')){resetAll()}" class="w-full text-red-500 border border-red-200 rounded-lg py-2.5 text-sm font-bold">🗑 데이터 초기화</button>
     </div>
@@ -333,9 +348,7 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
 <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-2.5 rounded-full shadow-lg z-50 opacity-0 transition-opacity pointer-events-none text-sm" style="white-space:nowrap;"></div>
 
 <script>
-const GH_TOKEN='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';
-const GH_OWNER='CHABUMSUK',GH_REPO='dark-horse-app',GH_FILE='data.json';
-const ADMIN_CODE='1234';
+const ADMIN_CODE = '1234';
 
 const DEFAULT_MEMBERS=[
   {id:"m1",name:"박숙경",grade:"49기",hakwhe:"금투",phone:"010-9119-7390",company:"DL E&C",title:"부장",ot:"3",status:"정회원",paid:false},
@@ -548,10 +561,81 @@ const DEFAULT_EVENTS=[
 
 // ── STATE ──
 
-let D={members:[],events:[],semesters:[]};
-let curTab='home',curDTab='dues',curFilter='all',curSem='26년 1학기',attendEid=null,adminOk=false,ghSHA='';
 
-/* ── LOCK ── */
+// ── 상태 ──
+let members=[], events=[], semesters=['26년 1학기','26년 2학기'];
+let curTab='home', curDTab='dues', curFilter='all', curSem='26년 1학기', attendEid=null, adminOk=false;
+let db, fs;
+
+// ── Firebase 초기화 ──
+function initDB(){
+  db = window._db;
+  fs = window._fs;
+  document.getElementById('fb-dot').className='fb-dot on';
+  document.getElementById('fb-txt').textContent='🔥 실시간 연동';
+
+  // 실시간 구독
+  fs.onSnapshot(fs.collection(db,'members'), snap=>{
+    members = snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderAll();
+  });
+  fs.onSnapshot(fs.collection(db,'events'), snap=>{
+    events = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.date?.localeCompare(b.date));
+    renderAll();
+  });
+  fs.onSnapshot(fs.collection(db,'settings'), snap=>{
+    snap.docs.forEach(d=>{
+      if(d.id==='config'){
+        const data=d.data();
+        if(data.semesters)semesters=data.semesters;
+      }
+    });
+  });
+
+  document.getElementById('page-loading').classList.add('hidden');
+  document.getElementById('page-home').classList.remove('hidden');
+}
+
+window.addEventListener('db-ready', initDB);
+if(window._dbReady) initDB();
+
+// ── Firebase 쓰기 ──
+async function fbSet(col, id, data){ await fs.setDoc(fs.doc(db,col,id), data); }
+async function fbUpdate(col, id, data){ await fs.updateDoc(fs.doc(db,col,id), data); }
+async function fbDelete(col, id){ await fs.deleteDoc(fs.doc(db,col,id)); }
+async function saveSemesters(){
+  await fs.setDoc(fs.doc(db,'settings','config'),{semesters});
+}
+
+// ── 초기 데이터 업로드 ──
+async function uploadSeedData(){
+  if(!confirm('195명 회원 데이터와 행사 데이터를 Firebase에 업로드하시겠습니까?\n(기존 데이터가 있으면 덮어쓰입니다)'))return;
+  showToast('📤 업로드 중… 잠시만 기다려주세요');
+  try{
+    for(const m of DEFAULT_MEMBERS){
+      await fs.setDoc(fs.doc(db,'members',m.id), m);
+    }
+    for(const e of DEFAULT_EVENTS){
+      await fs.setDoc(fs.doc(db,'events',e.id), e);
+    }
+    await fs.setDoc(fs.doc(db,'settings','config'),{semesters:['26년 1학기','26년 2학기']});
+    showToast('✅ 업로드 완료! 195명 데이터가 Firebase에 저장되었습니다');
+    closeModal('modal-admin');
+  }catch(e){showToast('❌ 오류: '+e.message);}
+}
+
+async function resetAll(){
+  try{
+    const mSnap = await fs.getDocs(fs.collection(db,'members'));
+    for(const d of mSnap.docs) await fs.deleteDoc(d.ref);
+    const eSnap = await fs.getDocs(fs.collection(db,'events'));
+    for(const d of eSnap.docs) await fs.deleteDoc(d.ref);
+    showToast('🔄 초기화 완료');
+    closeModal('modal-admin');
+  }catch(e){showToast('❌ 오류: '+e.message);}
+}
+
+// ── 잠금 ──
 function tryDues(){
   if(adminOk){gotoTab('dues');return;}
   document.getElementById('lock-wrap').classList.remove('hidden');
@@ -571,84 +655,9 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!document.getElementById('lock-wrap').classList.contains('hidden'))doUnlock();
 });
 
-/* ── GITHUB ── */
-async function ghPush(){
-  showToast('☁️ GitHub에 저장 중…');
-  try{
-    const content=btoa(unescape(encodeURIComponent(JSON.stringify(D,null,2))));
-    const body={message:'Update '+new Date().toISOString(),content};
-    if(ghSHA)body.sha=ghSHA;
-    const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`,{
-      method:'PUT',
-      headers:{'Authorization':'token '+GH_TOKEN,'Content-Type':'application/json'},
-      body:JSON.stringify(body)
-    });
-    const j=await r.json();
-    if(r.ok){ghSHA=j.content.sha;localStorage.setItem('dh_sha',ghSHA);showToast('✅ 저장 완료! 모든 회원이 같은 데이터를 봅니다');}
-    else showToast('❌ 저장 실패: '+j.message);
-  }catch(e){showToast('❌ 오류: '+e.message);}
-}
-async function ghPull(){
-  showToast('🔄 불러오는 중…');
-  try{
-    const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?t=${Date.now()}`,{
-      headers:{'Authorization':'token '+GH_TOKEN}
-    });
-    if(r.ok){
-      const j=await r.json();
-      ghSHA=j.sha;localStorage.setItem('dh_sha',ghSHA);
-      D=JSON.parse(decodeURIComponent(escape(atob(j.content.split('\n').join('')))));
-      if(!D.semesters||!D.semesters.length)D.semesters=[...DEFAULT_SEMESTERS];
-      saveLocal();renderAll();showToast('✅ 최신 데이터 불러오기 완료!');
-    }else showToast('ℹ️ GitHub에 저장된 데이터 없음');
-  }catch(e){showToast('❌ 오류: '+e.message);}
-}
-
-/* ── STORAGE ── */
-function saveLocal(){
-  localStorage.setItem('dh_v5',JSON.stringify(D));
-  autoSave();
-}
-let _saveTimer=null;
-function autoSave(){
-  if(_saveTimer)clearTimeout(_saveTimer);
-  _saveTimer=setTimeout(async()=>{
-    try{
-      const content=btoa(unescape(encodeURIComponent(JSON.stringify(D,null,2))));
-      const body={message:'Auto update '+new Date().toISOString(),content};
-      if(ghSHA)body.sha=ghSHA;
-      const r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+GH_FILE,{
-        method:'PUT',
-        headers:{'Authorization':'token '+GH_TOKEN,'Content-Type':'application/json'},
-        body:JSON.stringify(body)
-      });
-      const j=await r.json();
-      if(r.ok){
-        ghSHA=j.content.sha;
-        localStorage.setItem('dh_sha',ghSHA);
-        const dot=document.getElementById('sync-dot');
-        dot.textContent='✅ 저장됨';
-        setTimeout(()=>dot.textContent='',3000);
-      }
-    }catch(e){console.log('autosave:',e.message);}
-  },1500);
-}
-function loadLocal(){
-  const s=localStorage.getItem('dh_v5');
-  if(s){try{D=JSON.parse(s);}catch(e){initDef();}}else initDef();
-  if(!D.semesters||!D.semesters.length)D.semesters=[...DEFAULT_SEMESTERS];
-  ghSHA=localStorage.getItem('dh_sha')||'';
-}
-function initDef(){
-  D={members:JSON.parse(JSON.stringify(DEFAULT_MEMBERS)),events:JSON.parse(JSON.stringify(DEFAULT_EVENTS)),semesters:[...DEFAULT_SEMESTERS]};
-  saveLocal();
-}
-function resetAll(){initDef();closeModal('modal-admin');renderAll();showToast('🔄 초기화 완료');}
-
-/* ── UTILS ── */
+// ── 유틸 ──
 function dday(d){const t=new Date();t.setHours(0,0,0,0);const v=new Date(d);v.setHours(0,0,0,0);const n=Math.ceil((v-t)/86400000);if(n===0)return{l:'D-DAY',c:'bg-black text-white'};if(n>0)return{l:'D-'+n,c:'bg-gray-100 text-gray-700'};return{l:'종료',c:'bg-gray-100 text-gray-400'};}
 function fd(s){return new Date(s).toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});}
-function euid(){return 'e'+Date.now()+Math.random().toString(36).slice(2,5);}
 function hwc(h){return h?'hw-'+h:'hw-etc';}
 function showToast(m,ms=3000){const t=document.getElementById('toast');t.textContent=m;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',ms);}
 function closeModal(id){document.getElementById(id).classList.add('hidden');}
@@ -657,7 +666,7 @@ const EI={'개강파티':'🎉','환영회':'🎊','건부런':'🏃','등산':'
 function gi(n){for(const[k,v]of Object.entries(EI))if(n.includes(k))return v;return'📌';}
 function renderAll(){renderHome();if(curTab==='members')renderMembers();if(curTab==='dues'){if(curDTab==='dues')renderDues();else renderEvList();}}
 
-/* ── TABS ── */
+// ── 탭 ──
 function gotoTab(t){
   curTab=t;
   ['home','members','dues'].forEach(x=>{
@@ -692,27 +701,25 @@ function setFilter(f){
   renderMembers();
 }
 
-/* ── HOME ── */
+// ── 홈 ──
 function renderHome(){
-  const fm=D.members.filter(m=>m.status==='정회원');
-  document.getElementById('stat-total').textContent=D.members.length;
+  const fm=members.filter(m=>m.status==='정회원');
+  document.getElementById('stat-total').textContent=members.length;
   document.getElementById('stat-full').textContent=fm.length;
   const today=new Date();today.setHours(0,0,0,0);
-  const up=[...D.events].filter(e=>new Date(e.date)>=today).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const up=[...events].filter(e=>new Date(e.date)>=today).sort((a,b)=>new Date(a.date)-new Date(b.date));
   const c=document.getElementById('home-events');
   if(!up.length){c.innerHTML='<p class="text-gray-400 text-sm text-center py-8">예정된 행사가 없습니다</p>';return;}
   c.innerHTML=up.map(ev=>{
     const d=dday(ev.date);
     return`<div class="border border-gray-100 rounded-2xl p-4 mb-3 card-hover">
       <div class="flex items-start justify-between gap-2 mb-2">
-        <div class="flex items-center gap-2">
-          <span style="font-size:1.2rem;">${gi(ev.name)}</span>
-          <button onclick="openEvDetail('${ev.id}')" class="font-bold text-sm hover:underline text-left">${ev.name}</button>
-        </div>
+        <div class="flex items-center gap-2"><span style="font-size:1.2rem;">${gi(ev.name)}</span>
+          <button onclick="openEvDetail('${ev.id}')" class="font-bold text-sm hover:underline text-left">${ev.name}</button></div>
         <span class="text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap ${d.c}">${d.l}</span>
       </div>
       <div class="text-gray-400 text-xs mb-1">📅 ${fd(ev.date)}</div>
-      <div class="text-gray-400 text-xs mb-3">📍 ${ev.place} <a href="https://maps.google.com/?q=${ev.mapQuery}" target="_blank" class="ml-1 text-blue-500 underline">지도</a></div>
+      <div class="text-gray-400 text-xs mb-3">📍 ${ev.place||'미정'} <a href="https://maps.google.com/?q=${ev.mapQuery||ev.place}" target="_blank" class="ml-1 text-blue-500 underline">지도</a></div>
       <div class="flex items-center justify-between">
         <button onclick="openEvDetail('${ev.id}')" class="text-xs text-gray-500 hover:underline">👥 ${(ev.attendees||[]).length}명 참석예정</button>
         <button onclick="openAttend('${ev.id}')" class="btn-black" style="padding:6px 14px;font-size:.72rem;">✋ 참가신청</button>
@@ -721,14 +728,14 @@ function renderHome(){
   }).join('');
 }
 
-/* ── EVENT DETAIL ── */
+// ── 행사 상세 ──
 function openEvDetail(id){
-  const ev=D.events.find(e=>e.id===id);if(!ev)return;
-  const att=(ev.attendees||[]).map(mid=>D.members.find(m=>m.id===mid)).filter(Boolean);
+  const ev=events.find(e=>e.id===id);if(!ev)return;
+  const att=(ev.attendees||[]).map(mid=>members.find(m=>m.id===mid)).filter(Boolean);
   document.getElementById('modal-ev-detail-body').innerHTML=`
     <div class="flex items-center gap-2 mb-2"><span style="font-size:1.3rem;">${gi(ev.name)}</span><h3 class="font-bold text-base">${ev.name}</h3></div>
     <p class="text-gray-400 text-xs mb-1">📅 ${fd(ev.date)}</p>
-    <p class="text-gray-400 text-xs mb-1">📍 ${ev.place}</p>
+    <p class="text-gray-400 text-xs mb-1">📍 ${ev.place||'미정'}</p>
     ${ev.semester?`<p class="text-gray-400 text-xs mb-1">📚 ${ev.semester}</p>`:''}
     ${ev.desc?`<p class="text-gray-500 text-xs mb-4">${ev.desc}</p>`:''}
     <div class="flex items-center justify-between mb-3">
@@ -737,26 +744,26 @@ function openEvDetail(id){
     </div>
     ${att.length?`<div class="space-y-2">${att.map(m=>`
       <div class="flex items-center gap-3 py-1.5 border-b border-gray-50">
-        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold flex-shrink-0">${m.name[0]}</div>
+        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold">${m.name[0]}</div>
         <div><div class="text-sm font-medium">${m.name}</div><div class="text-xs text-gray-400">${m.grade}${m.company?' · '+m.company:''}</div></div>
       </div>`).join('')}</div>`:'<p class="text-gray-400 text-sm text-center py-6">아직 참석 신청이 없습니다</p>'}
     <button onclick="closeModal('modal-ev-detail')" class="btn-black w-full mt-4">닫기</button>`;
   openModal('modal-ev-detail');
 }
 
-/* ── ATTEND ── */
+// ── 참가신청 ──
 function openAttend(id){
   attendEid=id;
-  const ev=D.events.find(e=>e.id===id);
+  const ev=events.find(e=>e.id===id);
   document.getElementById('attend-title').textContent=(ev?ev.name:'')+' — 참가 신청';
   document.getElementById('attend-q').value='';
   renderAttend();openModal('modal-attend');
 }
 function renderAttend(){
   const q=document.getElementById('attend-q').value.toLowerCase();
-  const ev=D.events.find(e=>e.id===attendEid);
+  const ev=events.find(e=>e.id===attendEid);
   const att=ev?(ev.attendees||[]):[];
-  const list=D.members.filter(m=>!q||m.name.includes(q)||m.grade.includes(q));
+  const list=members.filter(m=>!q||m.name.includes(q)||m.grade.includes(q));
   document.getElementById('attend-list').innerHTML=list.map(m=>{
     const ia=att.includes(m.id);
     return`<div class="flex items-center justify-between py-2 border-b border-gray-50">
@@ -768,25 +775,28 @@ function renderAttend(){
     </div>`;
   }).join('');
 }
-function toggleAttend(mid){
-  const ev=D.events.find(e=>e.id===attendEid);if(!ev)return;
-  if(!ev.attendees)ev.attendees=[];
-  const i=ev.attendees.indexOf(mid);
-  if(i===-1){ev.attendees.push(mid);showToast('✅ 참가 신청!',1500);}
-  else{ev.attendees.splice(i,1);showToast('참가 취소',1500);}
-  saveLocal();renderAttend();renderHome();
+async function toggleAttend(mid){
+  const ev=events.find(e=>e.id===attendEid);if(!ev)return;
+  const att=ev.attendees||[];
+  const ia=att.includes(mid);
+  try{
+    await fbUpdate('events', ev.id, {
+      attendees: ia ? fs.arrayRemove(mid) : fs.arrayUnion(mid)
+    });
+    showToast(ia?'참가 취소':'✅ 참가 신청!',1500);
+  }catch(e){showToast('❌ 오류: '+e.message);}
 }
 
-/* ── MEMBERS ── */
+// ── 회원명부 ──
 function renderMembers(){
   const q=(document.getElementById('mem-search')?.value||'').toLowerCase();
-  const list=D.members.filter(m=>{
+  const list=members.filter(m=>{
     if(q&&!m.name.includes(q)&&!m.grade.includes(q)&&!(m.company||'').toLowerCase().includes(q))return false;
     if(curFilter==='all')return true;
     if(curFilter==='정회원'||curFilter==='비회원')return m.status===curFilter;
     return m.hakwhe===curFilter;
   });
-  document.getElementById('mem-badge').textContent='('+D.members.length+'명)';
+  document.getElementById('mem-badge').textContent='('+members.length+'명)';
   document.getElementById('mem-count').textContent=list.length+'명 표시';
   document.getElementById('mem-list').innerHTML=list.map(m=>`
     <div onclick="openMemberDetail('${m.id}')" class="flex items-center gap-3 border border-gray-100 rounded-xl p-3 mb-2 card-hover">
@@ -804,8 +814,8 @@ function renderMembers(){
 }
 
 function openMemberDetail(id){
-  const m=D.members.find(x=>x.id===id);if(!m)return;
-  const att=D.events.filter(e=>(e.attendees||[]).includes(id));
+  const m=members.find(x=>x.id===id);if(!m)return;
+  const att=events.filter(e=>(e.attendees||[]).includes(id));
   document.getElementById('modal-member-body').innerHTML=`
     <div class="flex items-center gap-3 mb-4">
       <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center font-black text-2xl">${m.name[0]}</div>
@@ -826,14 +836,15 @@ function openMemberDetail(id){
     </div>
     ${att.length?`<div class="mb-4"><div class="text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">참석 행사</div><div class="space-y-1.5">${att.map(e=>`<div class="flex justify-between text-xs border-b border-gray-50 pb-1.5"><span>${e.name}</span><span class="text-gray-400">${fd(e.date)}</span></div>`).join('')}</div></div>`:''}
     <div class="flex gap-2">
-      ${adminOk?`<button onclick="openMemberEdit('${m.id}')" class="btn-outline flex-1" style="font-size:.75rem;">✏️ 수정</button>
-      <button onclick="deleteMember('${m.id}')" class="flex-1 text-red-500 border border-red-200 rounded-lg py-2.5 text-sm font-bold">🗑 삭제</button>`:''}
+      ${adminOk?`<button onclick="openMemberEdit('${m.id}')" class="btn-outline" style="flex:1;font-size:.75rem;">✏️ 수정</button>
+      <button onclick="deleteMember('${m.id}')" class="flex-1 text-red-500 border border-red-200 rounded-lg py-2 text-sm font-bold">🗑 삭제</button>`:''}
       <button onclick="closeModal('modal-member')" class="btn-black" style="${adminOk?'flex:0.8':'flex:1'}">닫기</button>
     </div>`;
   openModal('modal-member');
 }
+
 function openMemberEdit(id){
-  const m=D.members.find(x=>x.id===id);if(!m)return;
+  const m=members.find(x=>x.id===id);if(!m)return;
   document.getElementById('medit-id').value=id;
   document.getElementById('medit-company').value=m.company||'';
   document.getElementById('medit-title').value=m.title||'';
@@ -841,20 +852,53 @@ function openMemberEdit(id){
   document.getElementById('medit-phone').value=m.phone||'';
   closeModal('modal-member');openModal('modal-medit');
 }
-function saveMemberEdit(){
+async function saveMemberEdit(){
   const id=document.getElementById('medit-id').value;
-  const m=D.members.find(x=>x.id===id);if(!m)return;
-  m.company=document.getElementById('medit-company').value.trim();
-  m.title=document.getElementById('medit-title').value.trim();
-  m.status=document.getElementById('medit-status').value;
-  m.phone=document.getElementById('medit-phone').value.trim();
-  saveLocal();closeModal('modal-medit');renderMembers();renderHome();
-  showToast('✅ 수정 완료! ⚙관리 → GitHub 저장을 눌러 동기화하세요');
+  try{
+    await fbUpdate('members', id, {
+      company:document.getElementById('medit-company').value.trim(),
+      title:document.getElementById('medit-title').value.trim(),
+      status:document.getElementById('medit-status').value,
+      phone:document.getElementById('medit-phone').value.trim()
+    });
+    closeModal('modal-medit');
+    showToast('✅ 수정 완료! 즉시 반영되었습니다');
+  }catch(e){showToast('❌ 오류: '+e.message);}
+}
+async function deleteMember(id){
+  const m=members.find(x=>x.id===id);if(!m)return;
+  if(!confirm(m.name+'님을 삭제하시겠습니까?'))return;
+  try{
+    await fbDelete('members', id);
+    closeModal('modal-member');
+    showToast('🗑 삭제 완료');
+  }catch(e){showToast('❌ 오류: '+e.message);}
+}
+async function addMember(){
+  const name=document.getElementById('new-mname').value.trim();
+  const grade=document.getElementById('new-mgrade').value.trim();
+  if(!name||!grade){showToast('⚠️ 성함과 기수는 필수');return;}
+  const id='m'+Date.now();
+  try{
+    await fbSet('members', id, {
+      id, name, grade,
+      hakwhe:document.getElementById('new-mhakwhe').value,
+      status:document.getElementById('new-mstatus').value,
+      company:document.getElementById('new-mcompany').value.trim(),
+      title:document.getElementById('new-mtitle').value.trim(),
+      phone:document.getElementById('new-mphone').value.trim(),
+      ot:document.getElementById('new-mot').value.trim(),
+      paid:false
+    });
+    ['new-mname','new-mgrade','new-mcompany','new-mtitle','new-mphone','new-mot'].forEach(i=>document.getElementById(i).value='');
+    closeModal('modal-add-member');
+    showToast('✅ 원우 추가 완료! 즉시 반영되었습니다');
+  }catch(e){showToast('❌ 오류: '+e.message);}
 }
 
-/* ── DUES ── */
+// ── 회비 ──
 function renderDues(){
-  const fm=D.members.filter(m=>m.status==='정회원');
+  const fm=members.filter(m=>m.status==='정회원');
   const pm=fm.filter(m=>m.paid);
   const r=fm.length?Math.round(pm.length/fm.length*100):0;
   document.getElementById('d-paid').textContent=pm.length;
@@ -868,57 +912,58 @@ function renderDues(){
         <div class="font-bold text-sm">${m.name}</div>
         <div class="text-xs text-gray-400">${m.grade}${m.hakwhe?' · '+m.hakwhe:''}</div>
       </div>
-      <button onclick="togglePaid('${m.id}')" class="toggle-paid ${m.paid?'bg-black text-white':'bg-white text-gray-500 border border-gray-200'}">${m.paid?'✓ 완납':'미납'}</button>
+      <button onclick="togglePaid('${m.id}','${m.paid}')" class="toggle-paid ${m.paid?'bg-black text-white':'bg-white text-gray-500 border border-gray-200'}">${m.paid?'✓ 완납':'미납'}</button>
     </div>`).join('');
 }
-function togglePaid(id){
-  const m=D.members.find(x=>x.id===id);if(!m)return;
-  m.paid=!m.paid;saveLocal();renderDues();renderHome();
-  showToast(m.paid?'✅ 완납 처리!':'↩️ 미납으로 변경');
+async function togglePaid(id, paid){
+  try{
+    await fbUpdate('members', id, {paid: paid==='true'?false:true});
+    showToast(paid==='true'?'↩️ 미납으로 변경':'✅ 완납 처리!');
+  }catch(e){showToast('❌ 오류: '+e.message);}
 }
 
-/* ── SEMESTER TABS ── */
+// ── 행사 관리 ──
 function fillSemOpts(){
-  ['eedit-sem','aev-sem'].forEach(id=>{
-    const el=document.getElementById(id);if(!el)return;
-    el.innerHTML=(D.semesters||[]).map(s=>`<option value="${s}">${s}</option>`).join('');
+  ['eedit-sem','aev-sem'].forEach(sid=>{
+    const el=document.getElementById(sid);if(!el)return;
+    el.innerHTML=semesters.map(s=>`<option value="${s}">${s}</option>`).join('');
   });
 }
 function renderSemTabs(){
   fillSemOpts();
-  document.getElementById('sem-tabs').innerHTML=(D.semesters||[]).map(s=>
+  document.getElementById('sem-tabs').innerHTML=semesters.map(s=>
     `<button onclick="pickSem('${s}')" class="sem-btn${curSem===s?' on':''}">${s}</button>`
   ).join('');
 }
 function pickSem(s){curSem=s;renderSemTabs();renderEvList();}
 
-/* ── EVENTS LIST ── */
 function renderEvList(){
   renderSemTabs();
   document.getElementById('ev-list-title').textContent=curSem+' 행사 목록';
-  const list=[...D.events].filter(e=>e.semester===curSem).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const list=[...events].filter(e=>e.semester===curSem).sort((a,b)=>a.date?.localeCompare(b.date));
   document.getElementById('ev-list').innerHTML=list.map(ev=>{
     const d=dday(ev.date);
-    const att=(ev.attendees||[]).map(id=>D.members.find(m=>m.id===id)).filter(Boolean);
+    const att=(ev.attendees||[]).map(id=>members.find(m=>m.id===id)).filter(Boolean);
     return`<div class="border border-gray-100 rounded-2xl p-4 mb-3">
       <div class="flex items-start justify-between gap-2 mb-2">
         <div class="flex items-center gap-2"><span style="font-size:1.1rem;">${gi(ev.name)}</span><span class="font-bold text-sm">${ev.name}</span></div>
         <span class="text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap ${d.c}">${d.l}</span>
       </div>
-      <div class="text-xs text-gray-400 mb-2">📅 ${fd(ev.date)} · 📍 ${ev.place}</div>
+      <div class="text-xs text-gray-400 mb-2">📅 ${fd(ev.date)} · 📍 ${ev.place||'미정'}</div>
       <div class="flex items-center justify-between">
         <button onclick="openEvDetail('${ev.id}')" class="text-xs text-gray-500 underline">👥 참석자 ${att.length}명 보기</button>
         <div class="flex gap-2">
-          <button onclick="openEvEdit('${ev.id}')" class="text-xs border border-gray-300 rounded-full px-3 py-1.5 hover:bg-gray-50">✏️ 수정</button>
-          <button onclick="openAttend('${ev.id}')" class="text-xs border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50">✋ 신청</button>
+          <button onclick="openEvEdit('${ev.id}')" class="text-xs border border-gray-300 rounded-full px-3 py-1.5 hover:bg-gray-50">✏️</button>
+          <button onclick="openAttend('${ev.id}')" class="text-xs border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50">✋</button>
           <button onclick="deleteEvent('${ev.id}')" class="text-xs border border-red-200 text-red-400 rounded-full px-3 py-1.5 hover:bg-red-50">🗑</button>
         </div>
       </div>
       ${att.length?`<div class="flex flex-wrap gap-1 mt-2">${att.slice(0,8).map(m=>`<span class="text-xs bg-gray-100 rounded-full px-2 py-0.5">${m.name}</span>`).join('')}${att.length>8?`<span class="text-xs text-gray-400">+${att.length-8}명</span>`:''}</div>`:''}</div>`;
   }).join('')||'<p class="text-center text-gray-400 text-sm py-8">이 학기에 등록된 행사가 없습니다</p>';
 }
+
 function openEvEdit(id){
-  const ev=D.events.find(e=>e.id===id);if(!ev)return;
+  const ev=events.find(e=>e.id===id);if(!ev)return;
   fillSemOpts();
   document.getElementById('eedit-id').value=id;
   document.getElementById('eedit-name').value=ev.name;
@@ -928,111 +973,58 @@ function openEvEdit(id){
   setTimeout(()=>{const s=document.getElementById('eedit-sem');if(s)s.value=ev.semester||curSem;},50);
   openModal('modal-eedit');
 }
-function saveEvEdit(){
+async function saveEvEdit(){
   const id=document.getElementById('eedit-id').value;
-  const ev=D.events.find(e=>e.id===id);if(!ev)return;
-  ev.name=document.getElementById('eedit-name').value.trim();
-  ev.date=document.getElementById('eedit-date').value;
-  ev.place=document.getElementById('eedit-place').value.trim()||'미정';
-  ev.desc=document.getElementById('eedit-desc').value.trim();
-  ev.semester=document.getElementById('eedit-sem').value;
-  ev.mapQuery=encodeURIComponent(ev.place);
-  saveLocal();closeModal('modal-eedit');renderEvList();renderHome();showToast('✅ 행사 수정 완료!');
+  try{
+    await fbUpdate('events', id, {
+      name:document.getElementById('eedit-name').value.trim(),
+      date:document.getElementById('eedit-date').value,
+      place:document.getElementById('eedit-place').value.trim()||'미정',
+      desc:document.getElementById('eedit-desc').value.trim(),
+      semester:document.getElementById('eedit-sem').value,
+      mapQuery:encodeURIComponent(document.getElementById('eedit-place').value.trim()||'미정')
+    });
+    closeModal('modal-eedit');renderEvList();showToast('✅ 행사 수정 완료!');
+  }catch(e){showToast('❌ 오류: '+e.message);}
 }
 function openAddEvModal(){fillSemOpts();setTimeout(()=>{const s=document.getElementById('aev-sem');if(s)s.value=curSem;},50);openModal('modal-add-ev');}
-function addEvent(){
+async function addEvent(){
   const name=document.getElementById('aev-name').value.trim();
   const date=document.getElementById('aev-date').value;
   if(!name||!date){showToast('⚠️ 행사명과 날짜 필수');return;}
   const place=document.getElementById('aev-place').value.trim();
-  D.events.push({id:euid(),name,date,place:place||'미정',mapQuery:encodeURIComponent(place||name),desc:document.getElementById('aev-desc').value.trim(),semester:document.getElementById('aev-sem').value||curSem,attendees:[]});
-  saveLocal();['aev-name','aev-date','aev-place','aev-desc'].forEach(i=>document.getElementById(i).value='');
-  closeModal('modal-add-ev');renderEvList();renderHome();showToast('✅ 행사 추가 완료!');
+  const id='e'+Date.now();
+  try{
+    await fbSet('events', id, {
+      id, name, date,
+      place:place||'미정',
+      mapQuery:encodeURIComponent(place||name),
+      desc:document.getElementById('aev-desc').value.trim(),
+      semester:document.getElementById('aev-sem').value||curSem,
+      attendees:[]
+    });
+    ['aev-name','aev-date','aev-place','aev-desc'].forEach(i=>document.getElementById(i).value='');
+    closeModal('modal-add-ev');showToast('✅ 행사 추가 완료!');
+  }catch(e){showToast('❌ 오류: '+e.message);}
 }
-function addSem(){
+async function deleteEvent(id){
+  const ev=events.find(e=>e.id===id);if(!ev)return;
+  if(!confirm(ev.name+' 행사를 삭제하시겠습니까?'))return;
+  try{
+    await fbDelete('events', id);
+    showToast('🗑 행사 삭제 완료');
+  }catch(e){showToast('❌ 오류: '+e.message);}
+}
+async function addSem(){
   const n=document.getElementById('asem-name').value.trim();
   if(!n){showToast('⚠️ 학기명 입력 필요');return;}
-  if(!D.semesters)D.semesters=[];
-  if(D.semesters.includes(n)){showToast('이미 존재합니다');return;}
-  D.semesters.push(n);saveLocal();document.getElementById('asem-name').value='';
-  curSem=n;closeModal('modal-add-sem');renderEvList();showToast('✅ 학기 추가!');
+  if(semesters.includes(n)){showToast('이미 존재합니다');return;}
+  semesters.push(n);
+  await saveSemesters();
+  document.getElementById('asem-name').value='';
+  curSem=n;closeModal('modal-add-sem');
+  renderEvList();showToast('✅ 학기 추가!');
 }
-
-
-
-/* ── DELETE MEMBER ── */
-function deleteMember(id){
-  const m=D.members.find(x=>x.id===id);
-  if(!m)return;
-  if(!confirm(m.name+'님을 삭제하시겠습니까?'))return;
-  D.members=D.members.filter(x=>x.id!==id);
-  // 행사 참석자 목록에서도 제거
-  D.events.forEach(e=>{if(e.attendees)e.attendees=e.attendees.filter(a=>a!==id);});
-  saveLocal();
-  closeModal('modal-member');
-  renderMembers();renderHome();
-  showToast('🗑 '+m.name+'님이 삭제되었습니다.');
-}
-
-/* ── DELETE EVENT ── */
-function deleteEvent(id){
-  const ev=D.events.find(e=>e.id===id);
-  if(!ev)return;
-  if(!confirm(ev.name+' 행사를 삭제하시겠습니까?'))return;
-  D.events=D.events.filter(e=>e.id!==id);
-  saveLocal();
-  renderEvList();renderHome();
-  showToast('🗑 행사가 삭제되었습니다.');
-}
-
-/* ── ADD MEMBER ── */
-function addMember(){
-  const name=document.getElementById('new-mname').value.trim();
-  const grade=document.getElementById('new-mgrade').value.trim();
-  if(!name||!grade){showToast('⚠️ 성함과 기수는 필수입니다');return;}
-  const newM={
-    id:'m'+Date.now(),
-    name,grade,
-    hakwhe:document.getElementById('new-mhakwhe').value,
-    status:document.getElementById('new-mstatus').value,
-    company:document.getElementById('new-mcompany').value.trim(),
-    title:document.getElementById('new-mtitle').value.trim(),
-    phone:document.getElementById('new-mphone').value.trim(),
-    ot:document.getElementById('new-mot').value.trim(),
-    paid:false
-  };
-  D.members.push(newM);
-  saveLocal();
-  ['new-mname','new-mgrade','new-mcompany','new-mtitle','new-mphone','new-mot'].forEach(i=>document.getElementById(i).value='');
-  document.getElementById('new-mhakwhe').value='';
-  document.getElementById('new-mstatus').value='정회원';
-  closeModal('modal-add-member');
-  renderMembers();renderHome();
-  showToast('✅ 원우가 추가되었습니다!');
-}
-
-/* ── INIT ── */
-window.addEventListener('load',async()=>{
-  loadLocal();
-  gotoTab('home');
-  try{
-    const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?t=${Date.now()}`,{
-      headers:{'Authorization':'token '+GH_TOKEN}
-    });
-    if(r.ok){
-      const j=await r.json();
-      if(j.sha!==ghSHA){
-        ghSHA=j.sha;localStorage.setItem('dh_sha',ghSHA);
-        D=JSON.parse(decodeURIComponent(escape(atob(j.content.split('\n').join('')))));
-        if(!D.semesters||!D.semesters.length)D.semesters=[...DEFAULT_SEMESTERS];
-        saveLocal();renderAll();
-        document.getElementById('sync-dot').textContent='✅ 최신';
-      } else {
-        document.getElementById('sync-dot').textContent='✅ 최신';
-      }
-    }
-  }catch(e){console.log('gh:',e.message);}
-});
 </script>
 </body>
 </html>
