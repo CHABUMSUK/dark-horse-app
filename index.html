@@ -91,7 +91,8 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
   <!-- HOME -->
   <div id="page-home">
     <div class="text-center py-6">
-      <div style="font-size:5.5rem;line-height:1;margin-bottom:8px;">🐴</div>
+      <img src="https://raw.githubusercontent.com/CHABUMSUK/dark-horse-app/main/Logo.png"
+           alt="DARK HORSE" style="width:200px;height:200px;object-fit:contain;margin:0 auto 8px;display:block;"/>
       <h1 class="playfair text-3xl font-bold tracking-widest mb-1">DARK HORSE</h1>
       <p class="text-gray-500 text-sm mb-1">건국대학교 부동산대학원</p>
       <p class="text-gray-400" style="font-size:.72rem;">2026, 다시 뛰는 다크호스! 78년생 말띠들의 거침없는 질주</p>
@@ -794,8 +795,9 @@ function openMemberDetail(id){
     </div>
     ${att.length?`<div class="mb-4"><div class="text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">참석 행사</div><div class="space-y-1.5">${att.map(e=>`<div class="flex justify-between text-xs border-b border-gray-50 pb-1.5"><span>${e.name}</span><span class="text-gray-400">${fd(e.date)}</span></div>`).join('')}</div></div>`:''}
     <div class="flex gap-2">
-      <button onclick="openMemberEdit('${m.id}')" class="btn-outline flex-1">✏️ 정보 수정</button>
-      <button onclick="closeModal('modal-member')" class="btn-black flex-1">닫기</button>
+      ${adminOk?`<button onclick="openMemberEdit('${m.id}')" class="btn-outline flex-1" style="font-size:.75rem;">✏️ 수정</button>
+      <button onclick="deleteMember('${m.id}')" class="flex-1 text-red-500 border border-red-200 rounded-lg py-2.5 text-sm font-bold">🗑 삭제</button>`:''}
+      <button onclick="closeModal('modal-member')" class="btn-black" style="${adminOk?'flex:0.8':'flex:1'}">닫기</button>
     </div>`;
   openModal('modal-member');
 }
@@ -878,6 +880,7 @@ function renderEvList(){
         <div class="flex gap-2">
           <button onclick="openEvEdit('${ev.id}')" class="text-xs border border-gray-300 rounded-full px-3 py-1.5 hover:bg-gray-50">✏️ 수정</button>
           <button onclick="openAttend('${ev.id}')" class="text-xs border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50">✋ 신청</button>
+          <button onclick="deleteEvent('${ev.id}')" class="text-xs border border-red-200 text-red-400 rounded-full px-3 py-1.5 hover:bg-red-50">🗑</button>
         </div>
       </div>
       ${att.length?`<div class="flex flex-wrap gap-1 mt-2">${att.slice(0,8).map(m=>`<span class="text-xs bg-gray-100 rounded-full px-2 py-0.5">${m.name}</span>`).join('')}${att.length>8?`<span class="text-xs text-gray-400">+${att.length-8}명</span>`:''}</div>`:''}</div>`;
@@ -924,6 +927,32 @@ function addSem(){
   curSem=n;closeModal('modal-add-sem');renderEvList();showToast('✅ 학기 추가!');
 }
 
+
+
+/* ── DELETE MEMBER ── */
+function deleteMember(id){
+  const m=D.members.find(x=>x.id===id);
+  if(!m)return;
+  if(!confirm(m.name+'님을 삭제하시겠습니까?'))return;
+  D.members=D.members.filter(x=>x.id!==id);
+  // 행사 참석자 목록에서도 제거
+  D.events.forEach(e=>{if(e.attendees)e.attendees=e.attendees.filter(a=>a!==id);});
+  saveLocal();
+  closeModal('modal-member');
+  renderMembers();renderHome();
+  showToast('🗑 '+m.name+'님이 삭제되었습니다. GitHub 동기화를 잊지 마세요.');
+}
+
+/* ── DELETE EVENT ── */
+function deleteEvent(id){
+  const ev=D.events.find(e=>e.id===id);
+  if(!ev)return;
+  if(!confirm(ev.name+' 행사를 삭제하시겠습니까?'))return;
+  D.events=D.events.filter(e=>e.id!==id);
+  saveLocal();
+  renderEvList();renderHome();
+  showToast('🗑 행사가 삭제되었습니다. GitHub 동기화를 잊지 마세요.');
+}
 
 /* ── ADD MEMBER ── */
 function addMember(){
