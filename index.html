@@ -71,7 +71,7 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <span id="sync-dot" class="text-xs text-gray-400"></span>
+      <span id="sync-dot" class="text-xs text-green-500"></span>
       <button onclick="openModal('modal-admin')" class="border border-gray-200 rounded-lg px-3 py-1.5 text-gray-400 hover:text-black text-xs">⚙ 관리</button>
     </div>
   </div>
@@ -317,7 +317,11 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
     <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5"></div>
     <h3 class="font-bold text-base mb-4">⚙️ 관리자 설정</h3>
     <div class="space-y-3">
-      <button onclick="ghPush()" class="btn-black w-full">☁️ GitHub에 저장 (전체 동기화)</button>
+      <div class="bg-gray-50 rounded-xl p-3 text-center mb-1">
+        <div class="text-sm font-bold mb-1">✅ 자동 저장 활성화</div>
+        <div class="text-xs text-gray-400">변경사항이 자동으로 GitHub에 저장됩니다</div>
+      </div>
+      <button onclick="ghPush()" class="btn-black w-full">☁️ 지금 즉시 동기화</button>
       <button onclick="ghPull()" class="btn-outline w-full">🔄 GitHub에서 최신 불러오기</button>
       <hr class="border-gray-100"/>
       <button onclick="if(confirm('초기화?')){resetAll()}" class="w-full text-red-500 border border-red-200 rounded-lg py-2.5 text-sm font-bold">🗑 데이터 초기화</button>
@@ -601,7 +605,34 @@ async function ghPull(){
 }
 
 /* ── STORAGE ── */
-function saveLocal(){localStorage.setItem('dh_v5',JSON.stringify(D));}
+function saveLocal(){
+  localStorage.setItem('dh_v5',JSON.stringify(D));
+  autoSave();
+}
+let _saveTimer=null;
+function autoSave(){
+  if(_saveTimer)clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(async()=>{
+    try{
+      const content=btoa(unescape(encodeURIComponent(JSON.stringify(D,null,2))));
+      const body={message:'Auto update '+new Date().toISOString(),content};
+      if(ghSHA)body.sha=ghSHA;
+      const r=await fetch('https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+GH_FILE,{
+        method:'PUT',
+        headers:{'Authorization':'token '+GH_TOKEN,'Content-Type':'application/json'},
+        body:JSON.stringify(body)
+      });
+      const j=await r.json();
+      if(r.ok){
+        ghSHA=j.content.sha;
+        localStorage.setItem('dh_sha',ghSHA);
+        const dot=document.getElementById('sync-dot');
+        dot.textContent='✅ 저장됨';
+        setTimeout(()=>dot.textContent='',3000);
+      }
+    }catch(e){console.log('autosave:',e.message);}
+  },1500);
+}
 function loadLocal(){
   const s=localStorage.getItem('dh_v5');
   if(s){try{D=JSON.parse(s);}catch(e){initDef();}}else initDef();
@@ -940,7 +971,7 @@ function deleteMember(id){
   saveLocal();
   closeModal('modal-member');
   renderMembers();renderHome();
-  showToast('🗑 '+m.name+'님이 삭제되었습니다. GitHub 동기화를 잊지 마세요.');
+  showToast('🗑 '+m.name+'님이 삭제되었습니다.');
 }
 
 /* ── DELETE EVENT ── */
@@ -951,7 +982,7 @@ function deleteEvent(id){
   D.events=D.events.filter(e=>e.id!==id);
   saveLocal();
   renderEvList();renderHome();
-  showToast('🗑 행사가 삭제되었습니다. GitHub 동기화를 잊지 마세요.');
+  showToast('🗑 행사가 삭제되었습니다.');
 }
 
 /* ── ADD MEMBER ── */
@@ -977,7 +1008,7 @@ function addMember(){
   document.getElementById('new-mstatus').value='정회원';
   closeModal('modal-add-member');
   renderMembers();renderHome();
-  showToast('✅ 원우가 추가되었습니다! GitHub 동기화를 잊지 마세요.');
+  showToast('✅ 원우가 추가되었습니다!');
 }
 
 /* ── INIT ── */
