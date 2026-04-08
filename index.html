@@ -731,7 +731,7 @@ function renderHome(){
       <div class="text-gray-400 text-xs mb-1">📅 ${fd(ev.date)}</div>
       <div class="text-gray-400 text-xs mb-3">📍 ${ev.place||'미정'} <a href="https://maps.google.com/?q=${ev.mapQuery||ev.place}" target="_blank" class="ml-1 text-blue-500 underline">지도</a></div>
       <div class="flex items-center justify-between">
-        <button onclick="openEvDetail('${ev.id}')" class="text-xs text-gray-500 hover:underline">👥 ${(ev.attendees||[]).length}명 참석예정</button>
+        <button onclick="openEvDetail('${ev.id}')" class="text-xs text-gray-500 hover:underline">✋ 신청 ${(ev.attendees||[]).length}명 · ✅ 실참 ${(ev.attended||[]).length}명</button>
         <button onclick="openAttend('${ev.id}')" class="btn-black" style="padding:6px 14px;font-size:.72rem;">✋ 참가신청</button>
       </div>
     </div>`;
@@ -752,11 +752,19 @@ function openEvDetail(id){
       <h4 class="font-bold text-sm">참석 예정 (${att.length}명)</h4>
       <button onclick="closeModal('modal-ev-detail');openAttend('${ev.id}')" class="text-xs underline text-gray-500">참가신청 →</button>
     </div>
-    ${att.length?`<div class="space-y-2">${att.map(m=>`
-      <div class="flex items-center gap-3 py-1.5 border-b border-gray-50">
-        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold">${m.name[0]}</div>
-        <div><div class="text-sm font-medium">${m.name}</div><div class="text-xs text-gray-400">${m.grade}${m.company?' · '+m.company:''}</div></div>
-      </div>`).join('')}</div>`:'<p class="text-gray-400 text-sm text-center py-6">아직 참석 신청이 없습니다</p>'}
+    ${att.length?`
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs text-gray-400">✋ 신청 ${att.length}명 · ✅ 실제참석 ${(ev.attended||[]).length}명</span>
+      ${adminOk?'<span class="text-xs text-blue-500">이름 옆 체크박스로 실제 참석 확인</span>':''}
+    </div>
+    <div class="space-y-2">${att.map(m=>{
+      const isAtt=(ev.attended||[]).includes(m.id);
+      return`<div class="flex items-center gap-3 py-1.5 border-b border-gray-50">
+        <div class="w-8 h-8 rounded-full ${isAtt?'bg-black':'bg-gray-100'} flex items-center justify-center text-xs font-bold ${isAtt?'text-white':''}">${m.name[0]}</div>
+        <div class="flex-1"><div class="text-sm font-medium">${m.name}</div><div class="text-xs text-gray-400">${m.grade}${m.company?' · '+m.company:''}</div></div>
+        ${adminOk?`<button onclick="toggleAttended('${ev.id}','${m.id}')" class="${isAtt?'bg-black text-white':'bg-gray-100 text-gray-500'} text-xs px-3 py-1.5 rounded-full font-bold">${isAtt?'✅ 참석':'○ 미참석'}</button>`:`<span class="${isAtt?'text-green-600':'text-gray-300'} text-xs font-bold">${isAtt?'✅ 참석':''}</span>`}
+      </div>`;
+    }).join('')}</div>`:'<p class="text-gray-400 text-sm text-center py-6">아직 참석 신청이 없습니다</p>'}
     <button onclick="closeModal('modal-ev-detail')" class="btn-black w-full mt-4">닫기</button>`;
   openModal('modal-ev-detail');
 }
@@ -784,6 +792,20 @@ function renderAttend(){
       <button onclick="toggleAttend('${m.id}')" class="${ia?'chip-yes':'chip-no'}">${ia?'✓ 신청됨':'+ 신청'}</button>
     </div>`;
   }).join('');
+}
+async function toggleAttended(eid, mid){
+  const ev=events.find(e=>e.id===eid);if(!ev)return;
+  const att=ev.attended||[];
+  const ia=att.includes(mid);
+  const m=members.find(x=>x.id===mid);
+  try{
+    await fbUpdate('events', eid, {
+      attended: ia ? fs.arrayRemove(mid) : fs.arrayUnion(mid)
+    });
+    showToast(ia?'○ 미참석으로 변경':'✅ '+(m?m.name:'')+'님 실제 참석 확인!', 2000);
+    // 모달 새로고침
+    setTimeout(()=>openEvDetail(eid), 300);
+  }catch(e){showToast('❌ 오류: '+e.message);}
 }
 async function toggleAttend(mid){
   const ev=events.find(e=>e.id===attendEid);if(!ev)return;
@@ -968,7 +990,7 @@ function renderEvList(){
       </div>
       <div class="text-xs text-gray-400 mb-2">📅 ${fd(ev.date)} · 📍 ${ev.place||'미정'}</div>
       <div class="flex items-center justify-between">
-        <button onclick="openEvDetail('${ev.id}')" class="text-xs text-gray-500 underline">👥 참석자 ${att.length}명 보기</button>
+        <button onclick="openEvDetail('${ev.id}')" class="text-xs text-gray-500 underline">✋ 신청 ${att.length}명 · ✅ 실참 ${(ev.attended||[]).length}명</button>
         <div class="flex gap-2">
           <button onclick="openEvEdit('${ev.id}')" class="text-xs border border-gray-300 rounded-full px-3 py-1.5 hover:bg-gray-50">✏️</button>
           <button onclick="openAttend('${ev.id}')" class="text-xs border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50">✋</button>
