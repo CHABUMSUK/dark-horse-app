@@ -348,7 +348,7 @@ input:focus,select:focus,textarea:focus{border-color:#000;}
 <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-5 py-2.5 rounded-full shadow-lg z-50 opacity-0 transition-opacity pointer-events-none text-sm" style="white-space:nowrap;"></div>
 
 <script>
-const ADMIN_CODE = '1234';
+const ADMIN_CODE = '7878';
 
 const DEFAULT_MEMBERS=[
   {id:"m1",name:"박숙경",grade:"49기",hakwhe:"금투",phone:"010-9119-7390",company:"DL E&C",title:"부장",ot:"3",status:"정회원",paid:false},
@@ -805,6 +805,13 @@ function renderMembers(){
     if(curFilter==='all')return true;
     if(curFilter==='정회원'||curFilter==='비회원')return m.status===curFilter;
     return m.hakwhe===curFilter;
+  });
+  // 정렬: 1순위 기수 내림차순(49기→1기), 2순위 이름 가나다순
+  list.sort((a,b)=>{
+    const ga=parseInt((a.grade||'0기').replace('기',''))||0;
+    const gb=parseInt((b.grade||'0기').replace('기',''))||0;
+    if(gb!==ga)return gb-ga;
+    return (a.name||'').localeCompare(b.name||'','ko');
   });
   document.getElementById('mem-badge').textContent='('+members.length+'명)';
   document.getElementById('mem-count').textContent=list.length+'명 표시';
